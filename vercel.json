@@ -1,15 +1,16 @@
 {
   "version": 2,
+  "framework": "remix",
   "builds": [
     {
       "src": "package.json",
-      "use": "@vercel/node"
+      "use": "@vercel/remix"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "app/root.jsx"
+      "dest": "/"
     }
   ]
 }

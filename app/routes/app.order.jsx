@@ -27,7 +27,7 @@ export async function loader({ request }) {
     throw new Response("Unauthorized", { status: 401 });
   }
   const shop = session.shop;
-  const response = await fetch("/order-update", {
+  const response = await fetch("/app/order.jsx", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

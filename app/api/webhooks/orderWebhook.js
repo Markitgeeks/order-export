@@ -1,109 +1,88 @@
-// import connectDB from "../../db.server";
-// import shopify from "../../shopify.server";
-// import Order from "../../model/order";
-// const GET_ALL_ORDERS = `
-//   query GetAllOrders {
-//     orders(first: 250) {
-//       edges {
-//         node {
-//           id
-//           name
-//           createdAt
-//           confirmed
-//           currencyCode
-//           currentTotalPriceSet {
-//             shopMoney {
-//               amount
-//               currencyCode
-//             }
-//           }
-//           channelInformation {
-//             channelId
-//             channelDefinition {
-//               channelName
-//             }
-//           }
-//           tags
-//           displayFulfillmentStatus
-//           displayFinancialStatus
-//           requiresShipping
-//           customer {
-//     firstName
-//     lastName
- 
-//   }
-//           lineItems(first: 150) {
-//             nodes {
-//               currentQuantity
-//             }
-//           }
-//           shippingLines(first: 150) {
-//             nodes {
-//               code
-//             }
-//           }
-//           processedAt
-//           refunds {
-//             note
-//           }
-//         }
-//       }
-//       pageInfo {
-//         hasNextPage
-//         endCursor
-//       }
-//     }
-//   }
-// `;
+import { authenticate } from "../../shopify.server";
+import connectDB from "../../db.server";
+import Order from "../../model/order";
+import { json } from "@remix-run/node";
 
-// function formatShopifyDate(isoDate) {
-//   const dateObj = new Date(isoDate);
-//   const optionsTime = {
-//     hour: "numeric",
-//     minute: "numeric",
-//     hour12: true,
-//   };
-//   return `${dateObj.getDate()} ${dateObj.toLocaleString("en-US", {
-//     month: "short",
-//   })} at ${dateObj.toLocaleTimeString("en-US", optionsTime)}`;
-// }
+export async function action({ request }) {
+  const { topic, shop, session } = await authenticate.webhook(request);
+function formatShopifyDate(isoDate) {
+  const dateObj = new Date(isoDate);
+  const optionsTime = { hour: "numeric", minute: "numeric", hour12: true };
+  return `${dateObj.getDate()} ${dateObj.toLocaleString("en-US", {
+    month: "short",
+  })} at ${dateObj.toLocaleTimeString("en-US", optionsTime)}`;
+}
+  try {
+    const payload = await request.json();
+    await connectDB();
 
-// export async function syncOrdersFromShopify(request) {
-//     console.log(request,"requst");
-//   const { admin } = await shopify.authenticate.admin(request);
-//   console.log(admin,"admin")
-//   const response = await admin.graphql(GET_ALL_ORDERS);
-//   console.log(response,"repose")
-//   const parsed = await response.json();
-//   console.log(parsed,"parseeeee")
-//   const orders = parsed.data.orders.edges.map(({ node }) => node);
+    // Line items prepare
+    const lineItems = payload.line_items.map((item) => {
+      const props = {};
+      const motifCodes = [];
+      item.properties?.forEach((prop) => {
+        if (prop.name && prop.value) {
+          props[prop.name] = prop.value;
+          if (prop.name.startsWith("MOTIF CODE")) {
+            motifCodes.push(prop.value);
+          }
+        }
+      });
 
-//   await connectDB();
+      return {
+        productCode: item.product_id || "",
+        quantity: item.quantity,
+        properties: props,
+        motifCodes: motifCodes.length ? motifCodes.join(", ") : null,
+      };
+    });
 
-//   for (const order of orders) {
-//     await Order.findOneAndUpdate(
-//       { id: order.id },
-//       {
-//         id: order.id,
-//         orderNumber: order.name,
-//         date: formatShopifyDate(order.processedAt),
-//         refunds: order.refunds?.map(refund => refund.note).filter(Boolean).join(", ") || null,
-//         customer: `${order.customer?.firstName || ""} ${order.customer?.lastName || ""}`,
-//         total: `$${order.currentTotalPriceSet?.shopMoney?.amount}` || "0",
-//         paymentStatus: order.displayFinancialStatus || "Payment pending",
-//         fulfillmentStatus: order.displayFulfillmentStatus || "Unfulfilled",
-//         channels: order.channelInformation?.channelDefinition?.channelName || "Online Store",
-//         items: order.lineItems?.nodes?.reduce((acc, item) => acc + (item.currentQuantity || 0), 0),
-//         tags: order.tags || [],
-//         deliveryMethod: order.shippingLines?.nodes?.[0]?.code || "Shipping not required",
-//         deliveryStatus: order.displayFulfillmentStatus || "",
-//       },
-//       { upsert: true, new: true }
-//     );
-//   }
+    // DB me save/update
+   await Order.findOneAndUpdate(
+        { id: payload.id },
+        {
+          id: payload.id,
+          orderNumber: payload.name,
+          date: formatShopifyDate(payload.processed_at),
+          refunds: payload.refunds?.map(ref => ref.note).filter(Boolean).join(", ") || null,
+          customer: `${payload.customer?.first_name || ""} ${payload.customer?.last_name || ""}`.trim(),
+          total: `$${payload.current_total_price_set?.shop_money?.amount || "0.00"}`,
+          paymentStatus: payload.financial_status
+            ? payload.financial_status.charAt(0).toUpperCase() + payload.financial_status.slice(1).toLowerCase()
+            : "Payment pending",
+          fulfillmentStatus: payload.fulfillment_status || "Unfulfilled",
+          channels: "Online Store",
+          items: payload.line_items.reduce((acc, i) => acc + (i.current_quantity || 0), 0) || 0,
+          tags: payload.tags ? payload.tags.split(", ").filter(Boolean) : [],
+          deliveryMethod: payload.shipping_lines?.[0]?.code || "Shipping not required",
+          deliveryStatus: payload.fulfillment_status || null,
+          poNumber: payload.po_number || "",
+          customerCode: payload.customer?.id || "",
+          customerOrderRef: payload.id || "",
+          lineItems: lineItems,
+          address: {
+            firstName: payload.customer?.default_address?.first_name || "",
+            lastName: payload.customer?.default_address?.last_name || "",
+            company: payload.customer?.default_address?.company || "",
+            address1: payload.customer?.default_address?.address1 || "",
+            address2: payload.customer?.default_address?.address2 || "",
+            city: payload.customer?.default_address?.city || "",
+            province: payload.customer?.default_address?.province || "",
+            country: payload.customer?.default_address?.country || "",
+            zip: payload.customer?.default_address?.zip || "",
+            phone: payload.customer?.default_address?.phone || "",
+            name: payload.customer?.default_address?.name || "",
+            provinceCode: payload.customer?.default_address?.province_code || "",
+            countryCode: payload.customer?.default_address?.country_code || "",
+            countryName: payload.customer?.default_address?.country_name || "",
+          }
+        },
+        { upsert: true, new: true }
+      );
 
-//   return {
-//     message: "Orders saved to MongoDB",
-//     count: orders.length,
-//   };
-// }
+    return json({ success: true });
+  } catch (err) {
+    console.error("Webhook Error:", err);
+    return json({ error: "Failed to save order" }, { status: 500 });
+  }
+}

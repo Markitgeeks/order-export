@@ -12,17 +12,26 @@ const shopify = shopifyApp({
   apiVersion: ApiVersion.January25,
   scopes: process.env.SCOPES?.split(","),
   appUrl: process.env.SHOPIFY_APP_URL || "",
-  authPathPrefix: "/auth", 
+  authPathPrefix: "/auth",
 
-sessionStorage: new MongoDBSessionStorage(
-  `${process.env.DB_URL}/${process.env.DB_NAME}`
-),
-webhooks:{
-  ORDERS_UPDATED: {
+  sessionStorage: new MongoDBSessionStorage(
+    `${process.env.DB_URL}/${process.env.DB_NAME}`
+  ),
+  webhooks: {
+    ORDERS_CREATE: {
       deliveryMethod: DeliveryMethod.Http,
-      callbackUrl: '/app/api/webhook',
+      callbackUrl: '/webhooks',
     },
-},
+    ORDERS_UPDATED: {
+      deliveryMethod: DeliveryMethod.Http,
+      callbackUrl: '/webhooks',
+    },
+  },
+  hooks: {
+    afterAuth: async ({ session }) => {
+      shopify.registerWebhooks({ session });
+    },
+  },
   distribution: AppDistribution.AppStore,
 
   future: {
@@ -43,3 +52,5 @@ export const unauthenticated = shopify.unauthenticated;
 export const login = shopify.login;
 export const registerWebhooks = shopify.registerWebhooks;
 export const sessionStorage = shopify.sessionStorage;
+
+

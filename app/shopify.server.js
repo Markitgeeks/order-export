@@ -16,7 +16,12 @@ const shopify = shopifyApp({
 sessionStorage: new MongoDBSessionStorage(
   `${process.env.DB_URL}/${process.env.DB_NAME}`
 ),
-
+webhooks:{
+  ORDERS_UPDATED: {
+      deliveryMethod: DeliveryMethod.Http,
+      callbackUrl: '/webhooks',
+    },
+},
   distribution: AppDistribution.AppStore,
 
   future: {

@@ -1,7 +1,8 @@
 import OrderManagement from '../components/Order';
-import { json } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
 import connectDB from "../db.server";
+import { json } from '@remix-run/node';
+import { useEffect, useState } from 'react';
+import shopify, { authenticate } from "../shopify.server";
 import Order from "../model/order";
 import dotenv from "dotenv";
 dotenv.config();
@@ -19,7 +20,6 @@ function formatShopifyDate(isoDate) {
 }
 
 export async function loader({ request }) {
-  const { default: shopify, authenticate } = await import("../shopify.server");
  const { admin, session } = await shopify.authenticate.admin(request);
 
   if (!session || !session.shop) {

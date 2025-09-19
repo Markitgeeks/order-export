@@ -1,14 +1,42 @@
 import { json } from "@remix-run/node";
-import { authenticate } from "../shopify.server";
+import crypto from "crypto";
 import connectDB from "../db.server";
 import Order from "../model/order";
 
+function verifyShopifyWebhook(request, rawBody) {
+  const hmacHeader = request.headers.get("x-shopify-hmac-sha256");
+  const generatedHash = crypto
+    .createHmac("sha256", process.env.SHOPIFY_API_SECRET)
+    .update(rawBody, "utf8")
+    .digest("base64");
+
+  return crypto.timingSafeEqual(
+    Buffer.from(generatedHash),
+    Buffer.from(hmacHeader || "")
+  );
+}
+
 export async function action({ request }) {
-  console.log(request,'requst')
   try {
-    // ✅ Authenticate & verify webhook from Shopify
-    const { topic, shop, payload } = await authenticate.webhook(request);
+    // ✅ raw body lena hoga (Remix default parse nahi karta)
+    const rawBody = await request.text();
+    console.log(rawBody,"rawBody")
+    // ✅ Verify webhook signature
+    const verified = verifyShopifyWebhook(request, rawBody);
+    if (!verified) {
+      console.error("❌ Webhook signature verification failed");
+      return json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // ✅ Parse payload JSON
+    const payload = JSON.parse(rawBody);
+    const topic = request.headers.get("x-shopify-topic");
+    const shop = request.headers.get("x-shopify-shop-domain");
+
     console.log("✅ Webhook verified:", topic, shop);
+
+    // ✅ MongoDB connect
+    await connectDB();
 
     function formatShopifyDate(isoDate) {
       const dateObj = new Date(isoDate);
@@ -17,9 +45,6 @@ export async function action({ request }) {
         month: "short",
       })} at ${dateObj.toLocaleTimeString("en-US", optionsTime)}`;
     }
-
-    // ✅ Connect MongoDB
-    await connectDB();
 
     // ✅ Line items prepare
     const lineItems = payload.line_items.map((item) => {
@@ -43,7 +68,7 @@ export async function action({ request }) {
       };
     });
 
-    // ✅ Save / Update Order in Mongo
+    // ✅ Save / Update order in DB
     await Order.findOneAndUpdate(
       { id: payload.id },
       {

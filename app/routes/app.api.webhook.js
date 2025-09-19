@@ -1,6 +1,6 @@
-import { authenticate } from "../../shopify.server";
-import connectDB from "../../db.server";
-import Order from "../../model/order";
+import { authenticate } from "../shopify.server";
+import connectDB from "../db.server";
+import Order from "../model/order";
 import { json } from "@remix-run/node";
 
 export async function action({ request }) {

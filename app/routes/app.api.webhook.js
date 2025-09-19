@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 function verifyShopifyWebhook(request, rawBody) {
+  console.log(process.env.SHOPIFY_API_SECRET,"process.env.SHOPIFY_API_SECRET")
   const hmacHeader = request.headers.get("x-shopify-hmac-sha256") || "";
   const generatedHash = crypto
     .createHmac("sha256", process.env.SHOPIFY_API_SECRET)

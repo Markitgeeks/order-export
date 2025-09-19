@@ -2,7 +2,7 @@ import OrderManagement from '../components/Order';
 import connectDB from "../db.server";
 import { json } from '@remix-run/node';
 import { useEffect, useState } from 'react';
-import shopify, { authenticate } from "../shopify.server";
+import { authenticate } from "../shopify.server";
 import Order from "../model/order";
 import dotenv from "dotenv";
 dotenv.config();
@@ -20,7 +20,7 @@ function formatShopifyDate(isoDate) {
 }
 
 export async function loader({ request }) {
- const { admin, session } = await shopify.authenticate.admin(request);
+ const { session } = await authenticate.admin(request);
 
   if (!session || !session.shop) {
     console.error("No Shopify session found");

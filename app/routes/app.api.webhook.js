@@ -4,6 +4,7 @@ import connectDB from "../db.server";
 import Order from "../model/order";
 
 export async function action({ request }) {
+  console.log(request,'requst')
   try {
     // ✅ Authenticate & verify webhook from Shopify
     const { topic, shop, payload } = await authenticate.webhook(request);

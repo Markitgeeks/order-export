@@ -4,13 +4,12 @@ import Order from "../model/order";
 import { json } from "@remix-run/node";
 
 export async function action({ request }) {
+  console.log(request,"request")
   try {
     // Shopify webhook authentication
-    const { topic, shop, session, payload } = await authenticate.webhook(request);
-   console.log(topic,"topic")
-   console.log(shop,"shop")
-   console.log(session,"session")
-   console.log(payload,"payload")
+    const { topic, shop, payload } = await authenticate.webhook(request);
+    console.log("✅ Webhook verified:", topic, shop);
+
     function formatShopifyDate(isoDate) {
       const dateObj = new Date(isoDate);
       const optionsTime = { hour: "numeric", minute: "numeric", hour12: true };
@@ -42,7 +41,7 @@ export async function action({ request }) {
       };
     });
 
-    // DB me save/update
+    // DB save/update
     await Order.findOneAndUpdate(
       { id: payload.id },
       {
@@ -100,7 +99,7 @@ export async function action({ request }) {
 
     return json({ success: true });
   } catch (err) {
-    console.error("Webhook Error:", err);
-    return json({ error: "Failed to save order" }, { status: 500 });
+    console.error("❌ Webhook Error:", err);
+    return json({ error: "Unauthorized" }, { status: 401 });
   }
 }

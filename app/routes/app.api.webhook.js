@@ -1,12 +1,11 @@
+import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import connectDB from "../db.server";
 import Order from "../model/order";
-import { json } from "@remix-run/node";
 
 export async function action({ request }) {
-  console.log(request,"request")
   try {
-    // Shopify webhook authentication
+    // ✅ Authenticate & verify webhook from Shopify
     const { topic, shop, payload } = await authenticate.webhook(request);
     console.log("✅ Webhook verified:", topic, shop);
 
@@ -18,12 +17,14 @@ export async function action({ request }) {
       })} at ${dateObj.toLocaleTimeString("en-US", optionsTime)}`;
     }
 
+    // ✅ Connect MongoDB
     await connectDB();
 
-    // Line items prepare
+    // ✅ Line items prepare
     const lineItems = payload.line_items.map((item) => {
       const props = {};
       const motifCodes = [];
+
       item.properties?.forEach((prop) => {
         if (prop.name && prop.value) {
           props[prop.name] = prop.value;
@@ -41,7 +42,7 @@ export async function action({ request }) {
       };
     });
 
-    // DB save/update
+    // ✅ Save / Update Order in Mongo
     await Order.findOneAndUpdate(
       { id: payload.id },
       {
@@ -54,9 +55,8 @@ export async function action({ request }) {
         customer: `${payload.customer?.first_name || ""} ${
           payload.customer?.last_name || ""
         }`.trim(),
-        total: `${
-          payload.current_total_price_set?.shop_money?.amount || "0.00"
-        }`,
+        total:
+          payload.current_total_price_set?.shop_money?.amount || "0.00",
         paymentStatus: payload.financial_status
           ? payload.financial_status.charAt(0).toUpperCase() +
             payload.financial_status.slice(1).toLowerCase()
@@ -97,9 +97,11 @@ export async function action({ request }) {
       { upsert: true, new: true }
     );
 
+    console.log("📦 Order saved/updated:", payload.id);
+
     return json({ success: true });
   } catch (err) {
-    console.error("❌ Webhook Error:", err);
+    console.error("❌ Webhook Error:", err.message);
     return json({ error: "Unauthorized" }, { status: 401 });
   }
 }

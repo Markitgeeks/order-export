@@ -19,7 +19,7 @@ sessionStorage: new MongoDBSessionStorage(
 webhooks:{
   ORDERS_UPDATED: {
       deliveryMethod: DeliveryMethod.Http,
-      callbackUrl: '/webhooks',
+      callbackUrl: '/app/api/webhook',
     },
 },
   distribution: AppDistribution.AppStore,

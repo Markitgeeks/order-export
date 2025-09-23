@@ -37,12 +37,7 @@ export default function AppOrder() {
 
   return (
     <>
-      if (!orders || orders.length === 0) {
-        <Text>No orders found.</Text>
-      }else{
         <OrderManagement orders={orders || []} />
-      }
-
     </>
   );
 }

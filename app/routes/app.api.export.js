@@ -1,106 +1,4 @@
-// import { json } from '@remix-run/node';
-// import connectDB from "../db.server";
-// import ExportHistory from "../model/exportHistory";
-// import fs from 'fs';
-// import path from 'path';
 
-// export const action = async ({ request }) => {
-//   if (request.method !== 'POST') {
-//     return json({ error: 'Method not allowed' }, { status: 405 });
-//   }
-
-//   try {
-//     await connectDB();
-//     const { orders, filters } = await request.json();
-//     if (!orders || orders.length === 0) {
-//       return json({ error: 'No orders to export' }, { status: 400 });
-//     }
-//     const headers = [
-//       'Order ID',
-//       'Order Number',
-//       'Date',
-//       'Customer',
-//       'Total',
-//       'Payment Status',
-//       'Fulfillment Status',
-//       'Delivery Method',
-//       'Channels',
-//       'Items',
-//       'Tags',
-//     ];
-
-//     const rows = orders.map((o) => {
-//       const orderIdNumber = o.id.replace('gid://shopify/Order/', '');
-//       const fields = [
-//         orderIdNumber,
-//         o.orderNumber,
-//         o.date,
-//         o.customer,
-//         o.total,
-//         o.paymentStatus,
-//         o.fulfillmentStatus,
-//         o.deliveryMethod,
-//         o.channels || '',
-//         Array.isArray(o.items) ? o.items.join(', ') : o.items || '',
-//         Array.isArray(o.tags) ? o.tags.join(', ') : o.tags,
-//       ];
-//       return fields.map(escapeCsvField).join(',');
-//     });
-//     const csv = [headers.join(','), ...rows].join('\n');
-
-//     const now = new Date();
-//     const filename = `orders_${formatForFilename(now)}.csv`;
-//     const filePath = path.join(process.cwd(), 'public', 'exports', filename);
-
-
-//     const dir = path.dirname(filePath);
-//     if (!fs.existsSync(dir)) {
-//       fs.mkdirSync(dir, { recursive: true });
-//     }
-
-//     fs.writeFileSync(filePath, '\uFEFF' + csv, 'utf8');
-
-
-//     const exportHistory = new ExportHistory({
-//       filename,
-//       exported_at: new Date(),
-//       filters,
-//       order_count: orders.length,
-//       file_path: `https://let-merchants-lazy-legend.trycloudflare.com/exports/${filename}`,
-//     });
-
-//     try {
-//       await exportHistory.save();
-//       console.log('Export history saved successfully');
-//     } catch (saveError) {
-//       console.error('Error saving export history:', saveError);
-//       throw saveError; 
-//     }
-
-//     return json({ success: true, filename, filePath: `/exports/${filename}` });
-//   } catch (error) {
-//     console.error('Export error:', error);
-//     return json({ error: 'Failed to export' }, { status: 500 });
-//   }
-// };
-
-// function escapeCsvField(value) {
-//   if (value === null || value === undefined) return '';
-//   const s = String(value);
-//   const needQuotes = s.includes(',') || s.includes('\n') || s.includes('"') || s.includes('\r');
-//   const escaped = s.replace(/"/g, '""');
-//   return needQuotes ? `"${escaped}"` : escaped;
-// }
-
-// function formatForFilename(dateObj) {
-//   if (!dateObj || !(dateObj instanceof Date) || isNaN(dateObj.getTime())) return 'all';
-//   const y = dateObj.getFullYear();
-//   const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-//   const d = String(dateObj.getDate()).padStart(2, '0');
-//   const hh = String(dateObj.getHours()).padStart(2, '0');
-//   const mm = String(dateObj.getMinutes()).padStart(2, '0');
-//   return `${y}${m}${d}_${hh}${mm}`;
-// }
 import { json } from '@remix-run/node';
 import connectDB from "../db.server";
 import ExportHistory from "../model/exportHistory";
@@ -163,11 +61,11 @@ export const action = async ({ request }) => {
 
         // 🔹 Collect all MOTIF CODE fields (MOTIF CODE / MOTIF CODE 1 / 2 / 3 ...)
         const motifCodes = Object.keys(props)
-          .filter(key => key.startsWith("MOTIF CODE")) // sirf motif wale
+          .filter(key => key.startsWith("MOTIF CODE"))
           .map(key => props[key])
-          .filter(Boolean); // null/empty hata do
+          .filter(Boolean); // remove null/empty
 
-        // Agar multiple hain to join with comma
+        // if multiples join with comma
         const motifValue = motifCodes.join(",") || "";
 
         return [
@@ -177,7 +75,7 @@ export const action = async ({ request }) => {
           item.quantity || "",
           props["BACKGROUND (TAPE) COLOUR"] || "",
           props["FOREGROUND (TEXT) COLOUR"] || "",
-          motifValue, 
+          motifValue,
           props["LINE 1 STYLE CODE"] || "",
           props["LINE 1 TEXT"] || "",
           props["LINE 2 STYLE CODE"] || "",
@@ -225,7 +123,7 @@ export const action = async ({ request }) => {
       exported_at: new Date(),
       filters,
       order_count: orders.length,
-      file_path: `https://iron-world-museums-reconstruction.trycloudflare.com/exports/${filename}`,
+      file_path: `https://order-export.onrender.com/exports/${filename}`,
     });
 
     await exportHistory.save();

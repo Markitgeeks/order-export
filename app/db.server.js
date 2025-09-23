@@ -2,10 +2,11 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 dotenv.config();
 
+
 export const dbConnection = async () => {
   try {
-    const connectionString = process.env.NODE_ENV !== 'production' 
-      ? `${process.env.DB_URL}/${process.env.DB_NAME}?authSource=admin` 
+    const connectionString = process.env.NODE_ENV !== 'production'
+      ? `${process.env.DB_URL}/${process.env.DB_NAME}?authSource=admin`
       : process.env.DB_URL;
     console.log(connectionString, '::: --- DataBase connection string ---');
 

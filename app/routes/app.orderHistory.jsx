@@ -12,7 +12,7 @@ export default function AppOrderHistory() {
           throw new Error(`Error: ${res.status}`);
         }
         const data = await res.json();
-        setExportHistories(data.exportOrders); 
+        setExportHistories(data.exportOrders);
       } catch (err) {
         console.error("Failed to fetch orders:", err);
         setError("Failed to load orders.");

@@ -52,7 +52,7 @@ function OrderManagement({ orders }) {
       <Toast content="No orders match the selected filters and date range." onDismiss={() => setToastActive(false)} />
     </Frame>
   ) : null;
-  
+
   const viewTabs = useMemo(() => itemStrings.map((item, index) => ({
     content: item,
     index,
@@ -462,7 +462,7 @@ useEffect(() => {
             </IndexTable>
           </Box>
         </LegacyCard>
-      : 
+      :
       <InlineStack align='center'><Spinner accessibilityLabel="Spinner example" size="large" />  </InlineStack>
       }
         {toastMarkup}

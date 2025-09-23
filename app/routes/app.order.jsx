@@ -1,3 +1,4 @@
+import { Text } from "@shopify/polaris";
 import OrderManagement from "../components/Order";
 // import connectDB from "../db.server";
 // import { json } from "@remix-run/node";
@@ -36,7 +37,12 @@ export default function AppOrder() {
 
   return (
     <>
-      <OrderManagement orders={orders || []} />
+      if (!orders || orders.length === 0) {
+        <Text>No orders found.</Text>
+      }else{
+        <OrderManagement orders={orders || []} />
+      }
+
     </>
   );
 }

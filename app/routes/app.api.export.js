@@ -61,7 +61,7 @@ export const action = async ({ request }) => {
 
         // 🔹 Collect all MOTIF CODE fields (MOTIF CODE / MOTIF CODE 1 / 2 / 3 ...)
         const motifCodes = Object.keys(props)
-          .filter(key => key.startsWith("MOTIF CODE"))
+          .filter(key => key.startsWith("Motifs"))
           .map(key => props[key])
           .filter(Boolean); // remove null/empty
 
@@ -73,21 +73,21 @@ export const action = async ({ request }) => {
           o.customerOrderRef || o.orderNumber || "",
           item.productCode || "",
           item.quantity || "",
-          props["BACKGROUND (TAPE) COLOUR"] || "",
-          props["FOREGROUND (TEXT) COLOUR"] || "",
+          props["Background Color"] || "",
+          props["Text Color"] || "",
           motifValue,
-          props["LINE 1 STYLE CODE"] || "",
-          props["LINE 1 TEXT"] || "",
+          props["Text Style"] || "",
+          props["Text line 1"] || "",
           props["LINE 2 STYLE CODE"] || "",
-          props["LINE 2 TEXT"] || "",
+          props["Text line 2"] || "",
           props["LINE 3 STYLE CODE"] || "",
-          props["LINE 3 TEXT"] || "",
+          props["Text line 3"] || "",
           props["LINE 4 STYLE CODE"] || "",
-          props["LINE 4 TEXT"] || "",
+          props["Text line 4"] || "",
           props["LINE 5 STYLE CODE"] || "",
-          props["LINE 5 TEXT"] || "",
+          props["Text line 5"] || "",
           props["LINE 6 STYLE CODE"] || "",
-          props["LINE 6 TEXT"] || "",
+          props["Text line 6"] || "",
           o.customer || "",
           o.address?.address1 || "",
           o.address?.address2 || "",

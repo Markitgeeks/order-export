@@ -7,13 +7,12 @@ import {
   Page,
   BlockStack,
   InlineStack,
-  Icon,
   Link,
   TextField,
   Badge,
   Spinner,
 } from '@shopify/polaris';
-import { OrderIcon } from '@shopify/polaris-icons';
+import { TitleBar } from '@shopify/app-bridge-react';
 import { useCallback, useState, useMemo, useEffect } from 'react';
 
 function OrderHistory({ exportHistories }) {
@@ -23,15 +22,15 @@ function OrderHistory({ exportHistories }) {
   const breakpoints = useBreakpoints();
   const condensed = breakpoints.smDown;
   const [queryValue, setQueryValue] = useState('');
-  
+
   const handleQueryChange = useCallback((value) => {
     setQueryValue(value);
-    setCurrentPage(1); 
+    setCurrentPage(1);
   }, []);
 
   const handleQueryClear = useCallback(() => {
     setQueryValue('');
-    setCurrentPage(1); 
+    setCurrentPage(1);
   }, []);
 useEffect(() => {
   if (exportHistories && exportHistories.length > 0) {
@@ -142,15 +141,9 @@ useEffect(() => {
   return (
     <Page
       fullWidth
-      title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Icon source={OrderIcon} />
-          <Text variant="headingLg" as="h5">
-            Order Export History
-          </Text>
-        </div>
-      }
     >
+ <TitleBar title="Order Export History">
+            </TitleBar>
       {!loading ? <LegacyCard>
         <Box paddingBlockEnd="400">
           <Box padding="400">

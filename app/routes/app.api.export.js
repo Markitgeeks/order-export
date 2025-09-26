@@ -59,13 +59,10 @@ export const action = async ({ request }) => {
       return o.lineItems.map((item, itemIndex) => {
         const props = item.properties || {};
 console.log(props);
-        // 🔹 Collect all MOTIF CODE fields (MOTIF CODE / MOTIF CODE 1 / 2 / 3 ...)
         const motifCodes = Object.keys(props)
           .filter(key => key.startsWith("Motifs"))
           .map(key => props[key])
-          .filter(Boolean); // remove null/empty
-
-        // if multiples join with comma
+          .filter(Boolean);
         const motifValue = motifCodes.join(",") || "";
 
         return [

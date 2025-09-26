@@ -37,7 +37,8 @@ export const action = async ({ request }) => {
 
             return {
                 productCode: item.product_id || "",
-                quantity: item.quantity,
+                quantity: item.current_quantity,
+                sku:item.sku,
                 properties: props,
                 motifCodes: motifCodes.length ? motifCodes.join(", ") : null,
             };

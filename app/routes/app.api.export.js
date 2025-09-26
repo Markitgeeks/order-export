@@ -72,7 +72,7 @@ export const action = async ({ request }) => {
           o.customerCode || "",
           o.customerOrderRef || o.orderNumber || "",
           item.sku || "",
-          item.current_quantity || "",
+          item.quantity || "",
           props["Background Color"] || "",
           props["Text Color"] || "",
           motifValue,
@@ -123,7 +123,7 @@ export const action = async ({ request }) => {
       exported_at: new Date(),
       filters,
       order_count: orders.length,
-      file_path: `https://order-export.onrender.com/exports/${filename}`,
+      file_path: `https://order-export-tjbwx.ondigitalocean.app/${filename}`,
     });
 
     await exportHistory.save();

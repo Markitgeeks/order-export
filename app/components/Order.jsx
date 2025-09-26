@@ -21,6 +21,7 @@ import {
   InlineGrid,
   InlineStack,
   Spinner,
+  EmptyState
 } from "@shopify/polaris";
 import { OrderIcon } from "@shopify/polaris-icons";
 import { useState, useCallback, useMemo, useEffect } from "react";
@@ -535,9 +536,9 @@ function OrderManagement({ orders }) {
             </Box>
           </LegacyCard>
         ) : (
-          <InlineStack align="center">
+          <EmptyState align="center">
             <Spinner accessibilityLabel="Spinner example" size="large" />{" "}
-          </InlineStack>
+          </EmptyState>
         )}
         {toastMarkup}
       </Page>

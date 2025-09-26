@@ -2,7 +2,7 @@
 
 client_id = "9a15092364f8b19da311b7af02b088e2"
 name = "Export-order"
-application_url = "https://order-export.onrender.com"
+application_url = "https://order-export-tjbwx.ondigitalocean.app/"
 embedded = true
 handle = "export-order-13"
 
@@ -18,9 +18,9 @@ scopes = "read_all_cart_transforms,read_all_checkout_completion_target_customiza
 
 [auth]
 redirect_urls = [
-  "https://order-export.onrender.com/auth/callback",
-  "https://order-export.onrender.com/auth/shopify/callback",
-  "https://order-export.onrender.com/api/auth/callback"
+  "https://order-export-tjbwx.ondigitalocean.app/auth/callback",
+  "https://order-export-tjbwx.ondigitalocean.app/auth/shopify/callback",
+  "https://order-export-tjbwx.ondigitalocean.app/api/auth/callback"
 ]
 
 [pos]

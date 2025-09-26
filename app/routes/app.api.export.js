@@ -71,8 +71,8 @@ export const action = async ({ request }) => {
         return [
           o.customerCode || "",
           o.customerOrderRef || o.orderNumber || "",
-          item.productCode || "",
-          item.quantity || "",
+          item.sku || "",
+          item.current_quantity || "",
           props["Background Color"] || "",
           props["Text Color"] || "",
           motifValue,

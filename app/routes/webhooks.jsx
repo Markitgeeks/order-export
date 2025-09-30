@@ -38,7 +38,7 @@ export const action = async ({ request }) => {
             return {
                 productCode: item.product_id || "",
                 quantity: item.current_quantity,
-                sku:item.sku,
+                sku:item.sku || "",
                 properties: props,
                 motifCodes: motifCodes.length ? motifCodes.join(", ") : null,
             };
@@ -66,11 +66,7 @@ console.log(payload);
                     : "Payment pending",
                 fulfillmentStatus: payload.fulfillment_status || "Unfulfilled",
                 channels: "Online Store",
-                items:
-                    payload.line_items.reduce(
-                        (acc, i) => acc + (i.current_quantity || 0),
-                        0
-                    ) || 0,
+                items:payload.line_items,
                 tags: payload.tags ? payload.tags.split(", ").filter(Boolean) : [],
                 deliveryMethod: payload.shipping_lines?.[0]?.code || "Shipping not required",
                 deliveryStatus: payload.fulfillment_status || null,

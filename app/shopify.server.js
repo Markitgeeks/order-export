@@ -14,9 +14,9 @@ const shopify = shopifyApp({
   appUrl: process.env.SHOPIFY_APP_URL || "",
   authPathPrefix: "/auth",
 
-  sessionStorage: new MongoDBSessionStorage(
-    `${process.env.DB_URL}/${process.env.DB_NAME}`
-  ),
+sessionStorage: new MongoDBSessionStorage(
+  process.env.DB_URL
+),
   webhooks: {
     ORDERS_CREATE: {
       deliveryMethod: DeliveryMethod.Http,

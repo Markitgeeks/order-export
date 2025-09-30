@@ -122,7 +122,7 @@ export const action = async ({ request }) => {
       exported_at: new Date(),
       filters,
       order_count: orders.length,
-      file_path: `https://order-export-tjbwx.ondigitalocean.app/${filename}`,
+      file_path: `https://order-export-tjbwx.ondigitalocean.app/exports/${filename}`,
     });
     await exportHistory.save();
     for (const order of orders) {

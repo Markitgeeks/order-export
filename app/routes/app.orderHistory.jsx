@@ -1,6 +1,6 @@
 import OrderHistory from "../components/OrderHistory";
 import { useEffect, useState } from "react";
-import { Spinner, EmptySearchResult, InlineStack } from "@shopify/polaris";
+import { Spinner, EmptySearchResult, EmptyState } from "@shopify/polaris";
 
 export default function AppOrderHistory() {
   const [exportHistories, setExportHistories] = useState([]);
@@ -36,9 +36,9 @@ export default function AppOrderHistory() {
 
   if (loading) {
     return (
-      <InlineStack align="center">
+      <EmptyState align="center">
         <Spinner accessibilityLabel="Loading order history" size="large" />
-      </InlineStack>
+      </EmptyState>
     );
   }
 

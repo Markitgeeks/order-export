@@ -48,7 +48,7 @@ export const action = async ({ request }) => {
     // Shared function to process and save order
     async function saveOrder(payload) {
         const lineItems = processLineItems(payload.line_items);
-console.log(payload);
+console.log(payload,"webhoook Payordddd");
         await Order.findOneAndUpdate(
             { id: payload.id },
             {
@@ -58,7 +58,7 @@ console.log(payload);
                 refunds:
                     payload.refunds?.map((ref) => ref.note).filter(Boolean).join(", ") ||
                     null,
-                customer: `${payload.customer?.first_name || ""} ${payload.customer?.last_name || ""}`.trim(),
+                customer: `${payload?.customer?.first_name || ""} ${payload?.customer?.last_name || ""}`,
                 total: payload.current_total_price_set?.shop_money?.amount || "0.00",
                 paymentStatus: payload.financial_status
                     ? payload.financial_status.charAt(0).toUpperCase() +
@@ -66,7 +66,7 @@ console.log(payload);
                     : "Payment pending",
                 fulfillmentStatus: payload.fulfillment_status || "Unfulfilled",
                 channels: "Online Store",
-                items:payload.line_items,
+                items:payload?.line_items?.length,
                 tags: payload.tags ? payload.tags.split(", ").filter(Boolean) : [],
                 deliveryMethod: payload.shipping_lines?.[0]?.code || "Shipping not required",
                 deliveryStatus: payload.fulfillment_status || null,

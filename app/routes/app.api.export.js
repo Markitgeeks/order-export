@@ -1,11 +1,12 @@
-
 import { json } from '@remix-run/node';
 import connectDB from "../db.server";
 import ExportHistory from "../model/exportHistory";
 import fs from 'fs';
 import path from 'path';
+import {authenticate } from "../shopify.server";
 
 export const action = async ({ request }) => {
+    const { admin } = await authenticate.admin(request);
   if (request.method !== 'POST') {
     return json({ error: 'Method not allowed' }, { status: 405 });
   }
@@ -57,9 +58,9 @@ export const action = async ({ request }) => {
       }
 
       return o.lineItems.map((item, itemIndex) => {
-console.log(o,"ooooooooo")
+        console.log(o, "ooooooooo");
         const props = item.properties || {};
-console.log(props);
+        console.log(props);
         const motifCodes = Object.keys(props)
           .filter(key => key.startsWith("Motifs"))
           .map(key => props[key])
@@ -67,10 +68,6 @@ console.log(props);
         const motifValue = motifCodes.join(",") || "";
 
         return [
-          // o.customerCode || "",
-          // o.customerOrderRef || o.orderNumber || "",
-          // item.productCode || "",
-          // item.quantity || "",
           "4670",
           o.name || o.orderNumber || "",
           item.sku || "",
@@ -100,7 +97,6 @@ console.log(props);
           o.deliveryMethod || ""
         ].map(escapeCsvField).join(',');
       });
-
     });
 
     if (rows.length === 0) {
@@ -120,6 +116,7 @@ console.log(props);
 
     fs.writeFileSync(filePath, '\uFEFF' + csv, 'utf8');
 
+    // Save export history
     const exportHistory = new ExportHistory({
       filename,
       exported_at: new Date(),
@@ -127,8 +124,46 @@ console.log(props);
       order_count: orders.length,
       file_path: `https://order-export-tjbwx.ondigitalocean.app/${filename}`,
     });
-
     await exportHistory.save();
+    for (const order of orders) {
+      console.log(order,"orderorder")
+      if (order?.id) { // Ensure order has an ID
+        try {
+          const response = await admin.graphql(
+            `#graphql
+            mutation orderUpdate($id: ID!, $tags: [String!]!) {
+              orderUpdate(input: { id: $id, tags: $tags }) {
+                order {
+                  id
+                  tags
+                }
+                userErrors {
+                  field
+                  message
+                }
+              }
+            }`,
+            {
+              variables: {
+                id:`gid://shopify/Order/${order?.id}`,
+                tags: ["ExportOrder"], // Add the new tag
+              },
+            }
+          );
+
+          const data = await response.json();
+          if (data.data.orderUpdate.userErrors.length > 0) {
+            console.error(`Failed to add tag to order ${order.id}:`, data.data.orderUpdate.userErrors);
+          } else {
+            console.log(`Successfully added 'orderCSVcreate' tag to order ${order.id}`);
+          }
+        } catch (error) {
+          console.error(`Error updating tags for order ${order.id}:`, error);
+        }
+      } else {
+        console.warn(`Order at index ${orders.indexOf(order)} has no ID`);
+      }
+    }
 
     return json({ success: true, filename, filePath: `/exports/${filename}` });
   } catch (error) {

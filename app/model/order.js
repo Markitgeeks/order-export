@@ -52,7 +52,7 @@ const orderSchema = new mongoose.Schema({
     default: "incomplete",
   },
   poNumber: { type: String, default: "" },
-  items: { type: Number, required: true },
+  items: { type: [Number], required: true },
   deliveryStatus: { type: String, default: "" },
   deliveryMethod: {
     type: String,

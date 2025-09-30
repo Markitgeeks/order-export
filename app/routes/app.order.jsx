@@ -1,6 +1,6 @@
 import OrderManagement from "../components/Order";
 import { useEffect, useState } from "react";
-import { Spinner, EmptySearchResult, InlineStack } from "@shopify/polaris";
+import { Spinner, EmptySearchResult, InlineStack, Box, EmptyState } from "@shopify/polaris";
 export default function AppOrder() {
   const [orders, setOrders] = useState([]);
   const [error, setError] = useState(null);
@@ -31,9 +31,9 @@ export default function AppOrder() {
   }
   if (loading) {
     return (
-      <InlineStack align="center">
+      <EmptyState align="center">
         <Spinner accessibilityLabel="Loading orders" size="large" />
-      </InlineStack>
+      </EmptyState>
     );
   }
 

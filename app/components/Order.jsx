@@ -24,6 +24,7 @@ import {
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { TitleBar } from "@shopify/app-bridge-react";
 function OrderManagement({ orders }) {
+  console.log(orders,"orderssssssss")
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 40;
@@ -322,7 +323,6 @@ function OrderManagement({ orders }) {
         deliveryMethod,
         channels,
         items,
-        tags,
         refunds,
         properties,
       },
@@ -381,9 +381,6 @@ function OrderManagement({ orders }) {
                 <Text as="span" variant="bodySm" tone="subdued">
                   Items:{" "}
                   {Array.isArray(items) ? items.join(", ") : items || "N/A"}
-                </Text>
-                <Text as="span" variant="bodySm" tone="subdued">
-                  Tags: {tags.length > 0 ? tags.join(", ") : "N/A"}
                 </Text>
               </BlockStack>
             </BlockStack>
@@ -453,9 +450,6 @@ function OrderManagement({ orders }) {
             <IndexTable.Cell>
               {Array.isArray(items) ? items.join(", ") : items || " "}
             </IndexTable.Cell>
-            <IndexTable.Cell>
-              {tags.length > 0 ? tags.join(", ") : " "}
-            </IndexTable.Cell>
           </>
         )}
       </IndexTable.Row>
@@ -517,7 +511,6 @@ function OrderManagement({ orders }) {
                   { title: "Delivery method" },
                   { title: "Channel" },
                   { title: "Items" },
-                  { title: "Tags" },
                 ]}
                 pagination={{
                   hasPrevious: currentPage > 1,

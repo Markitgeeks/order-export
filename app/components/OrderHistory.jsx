@@ -11,6 +11,7 @@ import {
   TextField,
   Badge,
   Spinner,
+  EmptyState
 } from '@shopify/polaris';
 import { TitleBar } from '@shopify/app-bridge-react';
 import { useCallback, useState, useMemo, useEffect } from 'react';
@@ -18,7 +19,7 @@ import { useCallback, useState, useMemo, useEffect } from 'react';
 function OrderHistory({ exportHistories }) {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 5;
+  const pageSize = 50;
   const breakpoints = useBreakpoints();
   const condensed = breakpoints.smDown;
   const [queryValue, setQueryValue] = useState('');
@@ -187,7 +188,8 @@ useEffect(() => {
             {rowMarkup}
           </IndexTable>
         </Box>
-      </LegacyCard> :  <InlineStack align='center'><Spinner accessibilityLabel="Spinner example" size="large" />  </InlineStack>}
+      </LegacyCard> :  
+      <EmptyState align='center'><Spinner accessibilityLabel="Spinner example" size="large" />  </EmptyState>}
     </Page>
   );
 }

@@ -48,7 +48,7 @@ export const action = async ({ request }) => {
     // Shared function to process and save order
     async function saveOrder(payload) {
         const lineItems = processLineItems(payload.line_items);
-
+console.log(payload);
         await Order.findOneAndUpdate(
             { id: payload.id },
             {

@@ -59,14 +59,11 @@ export const action = async ({ request }) => {
       return o.lineItems.map((item, itemIndex) => {
 console.log(o,"ooooooooo")
         const props = item.properties || {};
-
-        // 🔹 Collect all MOTIF CODE fields (MOTIF CODE / MOTIF CODE 1 / 2 / 3 ...)
+console.log(props);
         const motifCodes = Object.keys(props)
           .filter(key => key.startsWith("Motifs"))
           .map(key => props[key])
-          .filter(Boolean); // remove null/empty
-
-        // if multiples join with comma
+          .filter(Boolean);
         const motifValue = motifCodes.join(",") || "";
 
         return [
@@ -128,7 +125,7 @@ console.log(o,"ooooooooo")
       exported_at: new Date(),
       filters,
       order_count: orders.length,
-      file_path: `https://order-export.onrender.com/exports/${filename}`,
+      file_path: `https://order-export-tjbwx.ondigitalocean.app/${filename}`,
     });
 
     await exportHistory.save();

@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const lineItemSchema = new mongoose.Schema({
   productCode: { type: String, default: "" },
   quantity: { type: Number, default: 0 },
+  sku:{ type: String, default: "" },
   properties: { type: Map, of: String, default: {} },
 });
 

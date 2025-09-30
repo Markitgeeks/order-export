@@ -7,10 +7,8 @@ import {
   Badge,
   useBreakpoints,
   Box,
-  Button,
   Modal,
   RadioButton,
-  Icon,
   Page,
   BlockStack,
   DatePicker,
@@ -22,7 +20,6 @@ import {
   InlineStack,
   Spinner,
 } from "@shopify/polaris";
-import { OrderIcon } from "@shopify/polaris-icons";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { TitleBar } from "@shopify/app-bridge-react";
 function OrderManagement({ orders }) {

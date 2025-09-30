@@ -57,6 +57,7 @@ export const action = async ({ request }) => {
       }
 
       return o.lineItems.map((item, itemIndex) => {
+console.log(o,"ooooooooo")
         const props = item.properties || {};
 
         // 🔹 Collect all MOTIF CODE fields (MOTIF CODE / MOTIF CODE 1 / 2 / 3 ...)
@@ -69,9 +70,13 @@ export const action = async ({ request }) => {
         const motifValue = motifCodes.join(",") || "";
 
         return [
-          o.customerCode || "",
-          o.customerOrderRef || o.orderNumber || "",
-          item.productCode || "",
+          // o.customerCode || "",
+          // o.customerOrderRef || o.orderNumber || "",
+          // item.productCode || "",
+          // item.quantity || "",
+          "4670",
+          o.name || o.orderNumber || "",
+          item.sku || "",
           item.quantity || "",
           props["Background Color"] || "",
           props["Text Color"] || "",

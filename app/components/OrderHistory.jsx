@@ -40,16 +40,23 @@ useEffect(() => {
     setLoading(true);
   }
 }, [exportHistories]);
-  const filteredHistories = useMemo(() => {
-    if (!queryValue) return exportHistories;
-    const lowerQuery = queryValue.toLowerCase();
-    return exportHistories.filter(
+const filteredHistories = useMemo(() => {
+  if (!queryValue) {
+    return [...exportHistories].sort(
+      (a, b) => new Date(b.exported_at) - new Date(a.exported_at)
+    );
+  }
+  const lowerQuery = queryValue.toLowerCase();
+  return exportHistories
+    .filter(
       ({ filename, exported_at, order_count }) =>
         filename.toLowerCase().includes(lowerQuery) ||
         new Date(exported_at).toLocaleDateString().includes(lowerQuery) ||
         order_count.toString().includes(lowerQuery)
-    );
-  }, [exportHistories, queryValue]);
+    )
+    .sort((a, b) => new Date(b.exported_at) - new Date(a.exported_at)); // 👈 sort added
+}, [exportHistories, queryValue]);
+
 
   const paginatedHistories = useMemo(
     () => filteredHistories.slice((currentPage - 1) * pageSize, currentPage * pageSize),

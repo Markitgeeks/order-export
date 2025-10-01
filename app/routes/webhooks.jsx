@@ -4,7 +4,6 @@ import { authenticate } from '../shopify.server';
 export const action = async ({ request }) => {
     const { topic, shop, session, payload } = await authenticate.webhook(request);
     console.log(`:::---Received ${topic} webhook for ${shop}---:::`);
-    console.log(payload, '------------------payload');
 
     if (topic === 'ORDERS_PAID') {
         console.log("executing ::: ORDERS_PAID webhook");
@@ -48,7 +47,6 @@ export const action = async ({ request }) => {
     // Shared function to process and save order
     async function saveOrder(payload) {
         const lineItems = processLineItems(payload.line_items);
-console.log(payload,"webhoook Payordddd");
         await Order.findOneAndUpdate(
             { id: payload.id },
             {

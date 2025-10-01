@@ -58,9 +58,7 @@ export const action = async ({ request }) => {
       }
 
       return o.lineItems.map((item, itemIndex) => {
-        console.log(o, "ooooooooo");
         const props = item.properties || {};
-        console.log(props);
         const motifCodes = Object.keys(props)
           .filter(key => key.startsWith("Motifs"))
           .map(key => props[key])

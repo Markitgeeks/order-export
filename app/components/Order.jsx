@@ -24,7 +24,6 @@ import {
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { TitleBar } from "@shopify/app-bridge-react";
 function OrderManagement({ orders }) {
-  console.log(orders,"orderssssssss")
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 40;
@@ -388,7 +387,6 @@ function OrderManagement({ orders }) {
         ) : (
           <>
             <IndexTable.Cell>
-              {console.log(properties, "properties")}
               <Text
                 variant="bodyMd"
                 fontWeight="semibold"

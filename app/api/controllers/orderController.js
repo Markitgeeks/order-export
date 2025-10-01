@@ -15,7 +15,6 @@ export const getAllExportOrders = async () => {
   try {
     
     const exportOrders = await ExportHistorys.find({}).lean();
-    console.log(exportOrders,"orders")
     return exportOrders;
   } catch (error) {
     console.error('Error fetching orders:', error);

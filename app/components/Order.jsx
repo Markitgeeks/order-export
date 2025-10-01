@@ -27,7 +27,7 @@ function OrderManagement({ orders }) {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 40;
-  const [itemStrings] = useState(["All"]);
+  const [itemStrings] = useState(["All","Exported","Not Exported"]);
   const [toastActive, setToastActive] = useState(false);
   const [selected, setSelected] = useState(0);
   const [sortSelected, setSortSelected] = useState(["order asc"]);
@@ -89,18 +89,32 @@ function OrderManagement({ orders }) {
   ];
 
   // Filtering
-  const filteredOrders = useMemo(() => {
-    let result = [...orders];
-    if (queryValue) {
-      const lowerQuery = queryValue.toLowerCase();
-      result = result.filter(
-        (o) =>
-          o.orderNumber.toLowerCase().includes(lowerQuery) ||
-          o.customer.toLowerCase().includes(lowerQuery),
-      );
-    }
-    return result;
-  }, [orders, queryValue]);
+const filteredOrders = useMemo(() => {
+  let result = [...orders];
+
+  // Search filter
+  if (queryValue) {
+    const lowerQuery = queryValue.toLowerCase();
+    result = result.filter(
+      (o) =>
+        o.orderNumber.toLowerCase().includes(lowerQuery) ||
+        o.customer.toLowerCase().includes(lowerQuery),
+    );
+  }
+  result.map((event)=>{
+  return console.log(event?.tags,"tagsssss")
+  })
+  console.log(selected)
+  if (selected === 1) {
+    // Exported
+    result = result.filter((o) => o.tags?.includes("exported"));
+  } else if (selected === 2) {
+    // Not Exported
+    result = result.filter((o) => !o.tags?.includes("exported"));
+  }
+  return result;
+}, [orders, queryValue, selected]);
+
 
   // Pagination
   const paginatedOrdersRaw = useMemo(

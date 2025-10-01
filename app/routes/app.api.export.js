@@ -144,7 +144,7 @@ export const action = async ({ request }) => {
             {
               variables: {
                 id:`gid://shopify/Order/${order?.id}`,
-                tags: ["ExportOrder"], // Add the new tag
+                tags: ["exported"], // Add the new tag
               },
             }
           );

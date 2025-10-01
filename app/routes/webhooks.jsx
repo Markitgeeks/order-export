@@ -64,7 +64,7 @@ export const action = async ({ request }) => {
                     : "Payment pending",
                 fulfillmentStatus: payload.fulfillment_status || "Unfulfilled",
                 channels: "Online Store",
-                items:payload?.line_items?.length,
+                items: payload?.line_items?.reduce((sum, item) => sum + (item.current_quantity || 0),0),
                 tags: payload.tags ? payload.tags.split(", ").filter(Boolean) : [],
                 deliveryMethod: payload.shipping_lines?.[0]?.code || "Shipping not required",
                 deliveryStatus: payload.fulfillment_status || null,

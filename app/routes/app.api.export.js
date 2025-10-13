@@ -3,10 +3,10 @@ import connectDB from "../db.server";
 import ExportHistory from "../model/exportHistory";
 import fs from 'fs';
 import path from 'path';
-import {authenticate } from "../shopify.server";
+import { authenticate } from "../shopify.server";
 
 export const action = async ({ request }) => {
-    const { admin } = await authenticate.admin(request);
+  const { admin } = await authenticate.admin(request);
   if (request.method !== 'POST') {
     return json({ error: 'Method not allowed' }, { status: 405 });
   }
@@ -58,9 +58,11 @@ export const action = async ({ request }) => {
       }
 
       return o.lineItems.map((item, itemIndex) => {
-        const props = item.properties || {};
+        const rawProps = item.properties || {};
+        const props = normalizeProps(rawProps);
+
         const motifCodes = Object.keys(props)
-          .filter(key => key.startsWith("Motifs"))
+          .filter(key => key.startsWith("motifs")) // lowercase compare
           .map(key => props[key])
           .filter(Boolean);
         const motifValue = motifCodes.join(",") || "";
@@ -70,21 +72,21 @@ export const action = async ({ request }) => {
           o.name || o.orderNumber || "",
           item.sku || "",
           item.quantity || "",
-          props["Background Color"] || "",
-          props["Text Color"] || "",
+          props["background color"] || "",
+          props["text color"] || "",
           motifValue,
-          props["Text Style"] || "",
-          props["Text line 1"] || "",
-          props["LINE 2 STYLE CODE"] || "",
-          props["Text line 2"] || "",
-          props["LINE 3 STYLE CODE"] || "",
-          props["Text line 3"] || "",
-          props["LINE 4 STYLE CODE"] || "",
-          props["Text line 4"] || "",
-          props["LINE 5 STYLE CODE"] || "",
-          props["Text line 5"] || "",
-          props["LINE 6 STYLE CODE"] || "",
-          props["Text line 6"] || "",
+          props["text style"] || props["font style"] || props["select a font for single line text"] || "",
+          props["text line 1"] || "",
+          props["line 2 style code"] || "",
+          props["text line 2"] || "",
+          props["line 3 style code"] || "",
+          props["text line 3"] || "",
+          props["line 4 style code"] || "",
+          props["text line 4"] || "",
+          props["line 5 style code"] || "",
+          props["text line 5"] || "",
+          props["line 6 style code"] || "",
+          props["text line 6"] || "",
           o.customer || "",
           o.address?.address1 || "",
           o.address?.address2 || "",
@@ -123,9 +125,10 @@ export const action = async ({ request }) => {
       file_path: `https://order-export-tjbwx.ondigitalocean.app/exports/${filename}`,
     });
     await exportHistory.save();
+
+    // Tag orders as exported
     for (const order of orders) {
-      console.log(order,"orderorder")
-      if (order?.id) { // Ensure order has an ID
+      if (order?.id) {
         try {
           const response = await admin.graphql(
             `#graphql
@@ -143,8 +146,8 @@ export const action = async ({ request }) => {
             }`,
             {
               variables: {
-                id:`gid://shopify/Order/${order?.id}`,
-                tags: ["exported"], // Add the new tag
+                id: `gid://shopify/Order/${order?.id}`,
+                tags: ["exported"],
               },
             }
           );
@@ -153,7 +156,7 @@ export const action = async ({ request }) => {
           if (data.data.orderUpdate.userErrors.length > 0) {
             console.error(`Failed to add tag to order ${order.id}:`, data.data.orderUpdate.userErrors);
           } else {
-            console.log(`Successfully added 'orderCSVcreate' tag to order ${order.id}`);
+            console.log(`Successfully added 'exported' tag to order ${order.id}`);
           }
         } catch (error) {
           console.error(`Error updating tags for order ${order.id}:`, error);
@@ -169,6 +172,16 @@ export const action = async ({ request }) => {
     return json({ error: 'Failed to export' }, { status: 500 });
   }
 };
+
+// ✅ Normalize all props keys to lowercase + trim
+function normalizeProps(props) {
+  const normalized = {};
+  for (const key in props) {
+    if (!props.hasOwnProperty(key)) continue;
+    normalized[key.toLowerCase().trim()] = props[key];
+  }
+  return normalized;
+}
 
 function escapeCsvField(value) {
   if (value === null || value === undefined) return '';

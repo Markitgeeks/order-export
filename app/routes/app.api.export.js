@@ -19,7 +19,7 @@ export const action = async ({ request }) => {
       return json({ error: "No orders to export" }, { status: 400 });
     }
 
-    // Static CSV Headings
+    // Static CSV Headers
     const headers = [
       "CUSTOMER CODE",
       "CUSTOMER ORDER REF",
@@ -47,7 +47,7 @@ export const action = async ({ request }) => {
       "DELIVERY ADDRESS LINE 4",
       "DELIVERY COUNTRY",
       "DELIVERY POST CODE",
-      "DELIVERY METHOD",
+      "DELIVERY METHOD"
     ];
 
     // Flatten orders → multiple rows for multiple line items
@@ -57,102 +57,39 @@ export const action = async ({ request }) => {
         return [];
       }
 
-      return o.lineItems.map((item, itemIndex) => {
+      return o.lineItems.map((item) => {
         const rawProps = item.properties || {};
-        const props = normalizeProps(rawProps);
 
-        // Amazon ya Online Store check
-        const isAmazon = o.channels?.toLowerCase() === "amazon";
-
-        // Default props
-        let backgroundColor = "";
-        let motifValue = "";
-        let textColor = "";
-        let fontStyle = "";
-        let textLines = ["", "", "", "", "", ""];
-
-        if (isAmazon && Array.isArray(item.properties)) {
-          // 🟢 Amazon order: custom parse from strings
-          const amazonProps = {};
-
-          item.properties.forEach((prop) => {
-            if (prop.name.toLowerCase().includes("background color")) {
-              amazonProps.backgroundColor =
-                prop.value.split("optionValue :")[1]?.split("\n")[0]?.trim() ||
-                "";
-            }
-
-            if (prop.name.toLowerCase().includes("motif")) {
-              amazonProps.motif =
-                prop.value.split("optionValue :")[1]?.split("\n")[0]?.trim() ||
-                "";
-            }
-
-            if (prop.name.toLowerCase().includes("text line")) {
-              const color =
-                prop.value
-                  .match(/colorName\s*:\s*(.*)/)?.[1]
-                  ?.split("\n")[0]
-                  ?.trim() || "";
-              const font =
-                prop.value
-                  .match(/fontFamily\s*:\s*(.*)/)?.[1]
-                  ?.split("\n")[0]
-                  ?.trim() || "";
-              const text =
-                prop.value
-                  .match(/text\s*:\s*(.*)/)?.[1]
-                  ?.split("\n")[0]
-                  ?.trim() || "";
-
-              textColor = color || textColor;
-              fontStyle = font || fontStyle;
-
-              // Extract line number (1, 2, 3…)
-              const lineMatch = prop.name.match(/(\d+)/);
-              const lineIndex = lineMatch ? parseInt(lineMatch[1]) - 1 : 0;
-              textLines[lineIndex] = text;
-            }
-          });
-
-          backgroundColor = amazonProps.backgroundColor || "";
-          motifValue = amazonProps.motif || "";
+        // 🧠 Choose parser based on channel
+        let props = {};
+        if (o.channels?.toLowerCase() === "amazon") {
+          props = parseAmazonProperties(rawProps);
         } else {
-          // 🟢 Shopify (Online Store) normal flow
-          const motifCodes = Object.keys(props)
-            .filter((key) => key.startsWith("motifs"))
-            .map((key) => props[key])
-            .filter(Boolean);
-          motifValue = motifCodes.join(",") || "";
-
-          backgroundColor = props["background color"] || "";
-          textColor = props["text color"] || "";
-          fontStyle =
-            props["text style"] ||
-            props["font style"] ||
-            props["select a font for single line text"] ||
-            "";
-          textLines = [
-            props["text line 1"] || "",
-            props["text line 2"] || "",
-            props["text line 3"] || "",
-            props["text line 4"] || "",
-            props["text line 5"] || "",
-            props["text line 6"] || "",
-          ];
+          props = normalizeProps(rawProps);
         }
 
-        // 🧾 Final CSV Row
-        return [
-          "4670",
+        const motifValue = props["motif code"] || "";
+
+        const row = [
+          "4670", // CUSTOMER CODE (static)
           o.name || o.orderNumber || "",
           item.sku || "",
           item.quantity || "",
-          backgroundColor,
-          textColor,
+          props["background color"] || "",
+          props["text color"] || "",
           motifValue,
-          fontStyle,
-          ...textLines,
+          props["font style"] || props["text style"] || "",
+          props["text line 1"] || "",
+          props["line 2 style code"] || "",
+          props["text line 2"] || "",
+          props["line 3 style code"] || "",
+          props["text line 3"] || "",
+          props["line 4 style code"] || "",
+          props["text line 4"] || "",
+          props["line 5 style code"] || "",
+          props["text line 5"] || "",
+          props["line 6 style code"] || "",
+          props["text line 6"] || "",
           o.customer || "",
           o.address?.address1 || "",
           o.address?.address2 || "",
@@ -160,10 +97,10 @@ export const action = async ({ request }) => {
           o.address?.address4 || "",
           o.address?.country || "",
           o.address?.zip || "",
-          o.deliveryMethod || "",
-        ]
-          .map(escapeCsvField)
-          .join(",");
+          o.deliveryMethod || ""
+        ];
+
+        return row.map(escapeCsvField).join(",");
       });
     });
 
@@ -194,7 +131,7 @@ export const action = async ({ request }) => {
     });
     await exportHistory.save();
 
-    // Tag orders as exported
+    // 🏷️ Tag orders as exported in Shopify
     for (const order of orders) {
       if (order?.id) {
         try {
@@ -202,14 +139,8 @@ export const action = async ({ request }) => {
             `#graphql
             mutation orderUpdate($id: ID!, $tags: [String!]!) {
               orderUpdate(input: { id: $id, tags: $tags }) {
-                order {
-                  id
-                  tags
-                }
-                userErrors {
-                  field
-                  message
-                }
+                order { id tags }
+                userErrors { field message }
               }
             }`,
             {
@@ -217,25 +148,19 @@ export const action = async ({ request }) => {
                 id: `gid://shopify/Order/${order?.id}`,
                 tags: ["exported"],
               },
-            },
+            }
           );
 
           const data = await response.json();
+          console.log(data,"datadatadatadata")
           if (data.data.orderUpdate.userErrors.length > 0) {
-            console.error(
-              `Failed to add tag to order ${order.id}:`,
-              data.data.orderUpdate.userErrors,
-            );
+            console.error(`Failed to tag order ${order.id}:`, data.data.orderUpdate.userErrors);
           } else {
-            console.log(
-              `Successfully added 'exported' tag to order ${order.id}`,
-            );
+            console.log(`Tagged order ${order.id} as exported`);
           }
         } catch (error) {
-          console.error(`Error updating tags for order ${order.id}:`, error);
+          console.error(`Error tagging order ${order.id}:`, error);
         }
-      } else {
-        console.warn(`Order at index ${orders.indexOf(order)} has no ID`);
       }
     }
 
@@ -246,7 +171,7 @@ export const action = async ({ request }) => {
   }
 };
 
-// ✅ Normalize all props keys to lowercase + trim
+// ✅ Normalize Shopify/Online Store properties
 function normalizeProps(props) {
   const normalized = {};
   for (const key in props) {
@@ -256,18 +181,65 @@ function normalizeProps(props) {
   return normalized;
 }
 
+function parseAmazonProperties(rawProps) {
+  const parsed = {};
+
+  for (const key in rawProps) {
+    if (!rawProps.hasOwnProperty(key)) continue;
+    const value = rawProps[key];
+    const lowerKey = key.toLowerCase().trim();
+
+    if (typeof value === "string") {
+      const lines = value.split("\n");
+      const kv = {};
+
+      for (const line of lines) {
+        console.log(line,"line")
+        const [k, v] = line.split(":").map((s) => s?.trim());
+        if (k && v) kv[k.toLowerCase()] = v;
+      }
+
+      // 🎯 Map each property to CSV-relevant fields
+      if (lowerKey === "color") {
+        parsed["background color"] = kv["optionvalue"] || "";
+      } else if (lowerKey.startsWith("line 1 text")) {
+        parsed["text line 1"] = kv["text"] || "";
+        parsed["text color"] = kv["colorname"] || "";
+        parsed["font style"] = kv["fontfamily"] || "";
+      } else if (lowerKey.startsWith("line 2 text")) {
+        parsed["text line 2"] = kv["text"] || "";
+      } else if (lowerKey.startsWith("line 3 text")) {
+        parsed["text line 3"] = kv["text"] || "";
+      } else if (lowerKey.startsWith("line 4 text")) {
+        parsed["text line 4"] = kv["text"] || "";
+      } else if (lowerKey.startsWith("line 5 text")) {
+        parsed["text line 5"] = kv["text"] || "";
+      } else if (lowerKey.startsWith("line 6 text")) {
+        parsed["text line 6"] = kv["text"] || "";
+      } else if (lowerKey.startsWith("motif")) {
+        // Extract only code part before "-"
+        const motif = kv["optionvalue"]?.split("-")?.[0]?.trim() || "";
+        parsed["motif code"] = motif;
+      }
+      console.log(kv,"kvkv")
+    }
+  }
+
+  return parsed;
+}
+
+// ✅ Escape CSV fields correctly
 function escapeCsvField(value) {
   if (value === null || value === undefined) return "";
   const s = String(value);
-  const needQuotes =
-    s.includes(",") || s.includes("\n") || s.includes('"') || s.includes("\r");
+  const needQuotes = s.includes(",") || s.includes("\n") || s.includes('"') || s.includes("\r");
   const escaped = s.replace(/"/g, '""');
   return needQuotes ? `"${escaped}"` : escaped;
 }
 
+// ✅ Format filename timestamp
 function formatForFilename(dateObj) {
-  if (!dateObj || !(dateObj instanceof Date) || isNaN(dateObj.getTime()))
-    return "all";
+  if (!dateObj || !(dateObj instanceof Date) || isNaN(dateObj.getTime())) return "all";
   const y = dateObj.getFullYear();
   const m = String(dateObj.getMonth() + 1).padStart(2, "0");
   const d = String(dateObj.getDate()).padStart(2, "0");

@@ -56,7 +56,10 @@ function OrderManagement({ orders }) {
     <Frame>
       <Toast
         content="No orders match the selected filters and date range."
-        onDismiss={() => setToastActive(false)}
+        onDismiss={() => {
+          setToastActive(false)
+          setButtonLoding(false);
+        }}
       />
     </Frame>
   ) : null;
@@ -280,7 +283,6 @@ console.log(ordersToExport,"ordersToExport")
         console.error("Error hitting export API", err);
         setToastActive(true);
       }
-
       setExportModalOpen(false);
     },
     [

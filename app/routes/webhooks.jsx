@@ -63,7 +63,10 @@ export const action = async ({ request }) => {
                       payload.financial_status.slice(1).toLowerCase()
                     : "Payment pending",
                 fulfillmentStatus: payload.fulfillment_status || "Unfulfilled",
-                channels: "Online Store",
+                channels: payload?.shipping_lines?.[0]?.source === "shopify" ? "Online Store"
+                : payload?.shipping_lines?.[0]?.source === "amazon"
+                ? "Amazon"
+                : "",
                 items: payload?.line_items?.reduce((sum, item) => sum + (item.current_quantity || 0),0),
                 tags: payload.tags ? payload.tags.split(", ").filter(Boolean) : [],
                 deliveryMethod: payload.shipping_lines?.[0]?.code || "Shipping not required",

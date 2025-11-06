@@ -25,9 +25,10 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { TitleBar } from "@shopify/app-bridge-react";
 function OrderManagement({ orders }) {
   const [loading, setLoading] = useState(true);
+  const [buttonLoding , setButtonLoding] = useState(false)
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 40;
-  const [itemStrings] = useState(["All","Exported","Not Exported"]);
+  const [itemStrings] = useState(["All","Exported","Not Exported","Amazon","Online Store"]);
   const [toastActive, setToastActive] = useState(false);
   const [selected, setSelected] = useState(0);
   const [sortSelected, setSortSelected] = useState(["order asc"]);
@@ -101,16 +102,19 @@ const filteredOrders = useMemo(() => {
         o.customer.toLowerCase().includes(lowerQuery),
     );
   }
-  result.map((event)=>{
-  return console.log(event?.tags,"tagsssss")
-  })
-  console.log(selected)
+
   if (selected === 1) {
     // Exported
     result = result.filter((o) => o.tags?.includes("exported"));
   } else if (selected === 2) {
     // Not Exported
     result = result.filter((o) => !o.tags?.includes("exported"));
+  }
+  else if (selected === 3) {
+    result = result.filter((o) => o.channels?.includes("Amazon"));
+  }
+   else if (selected === 4) {
+    result = result.filter((o) => o.channels?.includes("Online Store"));
   }
   return result;
 }, [orders, queryValue, selected]);
@@ -198,12 +202,15 @@ const filteredOrders = useMemo(() => {
     paginatedOrders.every((o) => selectedResources.includes(o.id));
 
   // Export Handler
+  
   const handleExport = useCallback(
     async (selectedOrders = filteredOrders) => {
+      setButtonLoding(true)
+      console.log('----------------------------------')
       const now = new Date();
       let startTime, endTime;
       setTimeError(false);
-
+   
       if (
         exportOption === "dateRange" &&
         selectedDates.start &&
@@ -227,6 +234,7 @@ const filteredOrders = useMemo(() => {
         startTime.setHours(startHh, startMm, 0, 0);
         endTime = new Date(selectedDate);
         endTime.setHours(endHh, endMm, 0, 0);
+
       } else {
         startTime = new Date(0);
         endTime = now;
@@ -236,7 +244,7 @@ const filteredOrders = useMemo(() => {
         const orderDate = parseOrderDate(order.date);
         return orderDate >= startTime && orderDate <= endTime;
       });
-
+console.log(ordersToExport,"ordersToExport")
       if (ordersToExport.length === 0) {
         setToastActive(true);
         setExportModalOpen(false);
@@ -255,6 +263,7 @@ const filteredOrders = useMemo(() => {
 
         const data = await res.json();
         if (data.success) {
+          setButtonLoding(false)
           const link = document.createElement("a");
           link.href = data.filePath;
           link.download = data.filename;
@@ -262,10 +271,12 @@ const filteredOrders = useMemo(() => {
           link.click();
           document.body.removeChild(link);
         } else {
+          setButtonLoding(false)
           console.error("Export failed", data.error);
           setToastActive(true);
         }
       } catch (err) {
+         setButtonLoding(false)
         console.error("Error hitting export API", err);
         setToastActive(true);
       }
@@ -288,9 +299,11 @@ const filteredOrders = useMemo(() => {
   const promotedBulkActions = [
     {
       title: "Export",
+      loading:buttonLoding,
       actions: [
         {
           content: "Export as CSV",
+          
           onAction: () => {
             const selectedOrders = filteredOrders.filter((order) =>
               selectedResources.includes(order.id),
@@ -363,7 +376,7 @@ const filteredOrders = useMemo(() => {
                   {customer}
                 </Text>
                 <Text as="span" variant="bodyMd" alignment="end">
-                  {total}
+                  {`$${total}`}
                 </Text>
               </InlineStack>
               <InlineStack gap="200">
@@ -426,7 +439,7 @@ const filteredOrders = useMemo(() => {
                 textDecorationLine={refunds ? "line-through" : "none"}
                 numeric
               >
-                {total}
+                {`$${total}`}
               </Text>
             </IndexTable.Cell>
             <IndexTable.Cell>
@@ -475,9 +488,30 @@ const filteredOrders = useMemo(() => {
         <TitleBar title="Order Export">
          <button onClick={() => setExportModalOpen(true)}>Export</button>
         </TitleBar>
+        {buttonLoding && (
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      background: "rgba(255,255,255,0.7)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 9999,
+    }}
+  >
+    <Spinner accessibilityLabel="Exporting orders..." size="large" />
+  </div>
+)}
         {!loading ? (
+          
           <LegacyCard>
+            
             <Box paddingBlockEnd="400">
+            
               <IndexFilters
                 sortOptions={sortOptions}
                 sortSelected={sortSelected}
@@ -524,6 +558,7 @@ const filteredOrders = useMemo(() => {
                   { title: "Channel" },
                   { title: "Items" },
                 ]}
+                loading={buttonLoding}
                 pagination={{
                   hasPrevious: currentPage > 1,
                   hasNext: currentPage * pageSize < filteredOrders.length,
@@ -553,6 +588,7 @@ const filteredOrders = useMemo(() => {
         primaryAction={{
           content: "Export",
           onAction: () => handleExport(),
+          loading:buttonLoding,
         }}
         secondaryActions={[
           {

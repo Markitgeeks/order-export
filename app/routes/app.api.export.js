@@ -78,17 +78,17 @@ export const action = async ({ request }) => {
           props["background color"] || "",
           props["text color"] || "",
           motifValue,
-          props["font style"] || props["text style"] || "",
-          props["text line 1"] || "",
-          props["line 2 style code"] || "",
+          props["font style"] || props["text style"] ||  props["font style 1"] || props["text style 1"] || "",
+          props["text line 1"] ||props["Text Line 1"] || "",
+          props["font style 2"] || props["text style 2"] ||  props["font style"] || props["text style"] || "",
           props["text line 2"] || "",
-          props["line 3 style code"] || "",
+          props["font style 3"] || props["text style 3"] ||  props["font style"] || props["text style"] || "",
           props["text line 3"] || "",
-          props["line 4 style code"] || "",
+          props["font style 4"] || props["text style 4"] ||  props["font style"] || props["text style"] || "",
           props["text line 4"] || "",
-          props["line 5 style code"] || "",
+          props["font style 5"] || props["text style 5"] ||  props["font style"] || props["text style"] || "",
           props["text line 5"] || "",
-          props["line 6 style code"] || "",
+          props["font style 6"] || props["text style 6"] ||  props["font style"] || props["text style"] || "",
           props["text line 6"] || "",
           o.customer || "",
           o.address?.address1 || "",
@@ -202,11 +202,11 @@ function parseAmazonProperties(rawProps) {
       // 🎯 Map each property to CSV-relevant fields
       if (lowerKey === "color") {
         parsed["background color"] = kv["optionvalue"] || "";
-      } else if (lowerKey.startsWith("line 1 text")) {
-        parsed["text line 1"] = kv["text"] || "";
+      } else if (lowerKey.startsWith("line 1 text") || lowerKey.startsWith("Text Line 1") || lowerKey.startsWith("Name for Labels") ) {
+        parsed["v"] = kv["text"] ||  "";
         parsed["text color"] = kv["colorname"] || "";
         parsed["font style"] = kv["fontfamily"] || "";
-      } else if (lowerKey.startsWith("line 2 text")) {
+      } else if (lowerKey.startsWith("line 2 text") || lowerKey.startsWith("Text Line 2 (optional)")) {
         parsed["text line 2"] = kv["text"] || "";
       } else if (lowerKey.startsWith("line 3 text")) {
         parsed["text line 3"] = kv["text"] || "";
@@ -216,7 +216,7 @@ function parseAmazonProperties(rawProps) {
         parsed["text line 5"] = kv["text"] || "";
       } else if (lowerKey.startsWith("line 6 text")) {
         parsed["text line 6"] = kv["text"] || "";
-      } else if (lowerKey.startsWith("motif")) {
+      } else if (lowerKey.startsWith("motif") || lowerKey.startsWith("Motif (Left of Text)")) {
         // Extract only code part before "-"
         const motif = kv["optionvalue"]?.split("-")?.[0]?.trim() || "";
         parsed["motif code"] = motif;

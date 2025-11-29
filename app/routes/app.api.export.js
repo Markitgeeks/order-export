@@ -15,9 +15,13 @@ export const action = async ({ request }) => {
     await connectDB();
     const { orders, filters } = await request.json();
 
-    if (!orders || !Array.isArray(orders) || orders.length === 0) {
+      if (!orders || !Array.isArray(orders) || orders.length === 0) {
       return json({ error: "No orders to export" }, { status: 400 });
-    }
+        }
+
+        if (orders.length > 100) {
+          return json({ error: "You can export only 100 orders at a time" }, { status: 400 });
+        }
 
     // Static CSV Headers
     const headers = [
@@ -152,7 +156,6 @@ export const action = async ({ request }) => {
           );
 
           const data = await response.json();
-          console.log(data,"datadatadatadata")
           if (data.data.orderUpdate.userErrors.length > 0) {
             console.error(`Failed to tag order ${order.id}:`, data.data.orderUpdate.userErrors);
           } else {
@@ -194,7 +197,6 @@ function parseAmazonProperties(rawProps) {
       const kv = {};
 
       for (const line of lines) {
-        console.log(line,"line")
         const [k, v] = line.split(":").map((s) => s?.trim());
         if (k && v) kv[k.toLowerCase()] = v;
       }
@@ -221,7 +223,6 @@ function parseAmazonProperties(rawProps) {
         const motif = kv["optionvalue"]?.split("-")?.[0]?.trim() || "";
         parsed["motif code"] = motif;
       }
-      console.log(kv,"kvkv")
     }
   }
 

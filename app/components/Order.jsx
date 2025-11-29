@@ -27,11 +27,11 @@ function OrderManagement({ orders }) {
   const [loading, setLoading] = useState(true);
   const [buttonLoding , setButtonLoding] = useState(false)
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 40;
+  const pageSize = 50;
   const [itemStrings] = useState(["All","Exported","Not Exported","Amazon","Online Store"]);
   const [toastActive, setToastActive] = useState(false);
   const [selected, setSelected] = useState(0);
-  const [sortSelected, setSortSelected] = useState(["order asc"]);
+ const [sortSelected, setSortSelected] = useState(["date desc"]);
   const { mode, setMode } = useSetIndexFiltersMode();
   const [selectedDates, setSelectedDates] = useState({
     start: new Date(),
@@ -54,13 +54,19 @@ function OrderManagement({ orders }) {
   const onHandleCancel = () => {};
   const toastMarkup = toastActive ? (
     <Frame>
-      <Toast
+      {orders.length >= 100 ? <Toast
+        content="You can export only 100 orders at a time"
+        onDismiss={() => {
+          setToastActive(false)
+          setButtonLoding(false);
+        }}
+      />: <Toast
         content="No orders match the selected filters and date range."
         onDismiss={() => {
           setToastActive(false)
           setButtonLoding(false);
         }}
-      />
+      />}
     </Frame>
   ) : null;
 
@@ -97,7 +103,7 @@ const filteredOrders = useMemo(() => {
   let result = [...orders];
 
   // Search filter
-  if (queryValue) {
+ if (queryValue) {
     const lowerQuery = queryValue.toLowerCase();
     result = result.filter(
       (o) =>
@@ -122,49 +128,47 @@ const filteredOrders = useMemo(() => {
   return result;
 }, [orders, queryValue, selected]);
 
+const sortedOrders = useMemo(() => {
+  const [sortKey, sortDirection] = sortSelected[0].split(" ");
+  let result = [...filteredOrders];
 
-  // Pagination
-  const paginatedOrdersRaw = useMemo(
-    () =>
-      filteredOrders.slice(
-        (currentPage - 1) * pageSize,
-        currentPage * pageSize,
-      ),
-    [filteredOrders, currentPage],
-  );
-
-  // Sorting
-  const paginatedOrders = useMemo(() => {
-    const [sortKey, sortDirection] = sortSelected[0].split(" ");
-    let result = [...paginatedOrdersRaw];
-    result.sort((a, b) => {
-      let va, vb;
-      switch (sortKey) {
-        case "order":
-          va = parseInt(b.id.replace("gid://shopify/Order/", ""), 10);
-          vb = parseInt(a.id.replace("gid://shopify/Order/", ""), 10);
-          break;
-        case "customer":
-          va = a.customer.toLowerCase();
-          vb = b.customer.toLowerCase();
-          break;
-        case "date":
-          va = parseOrderDate(a.date).getTime();
-          vb = parseOrderDate(b.date).getTime();
-          break;
-        case "total":
-          va = parseFloat(String(a.total).replace("$", "")) || 0;
-          vb = parseFloat(String(b.total).replace("$", "")) || 0;
-          break;
-        default:
-          return 0;
-      }
-      if (va < vb) return sortDirection === "asc" ? -1 : 1;
+  result.sort((a, b) => {
+    let va, vb;
+    switch (sortKey) {
+      case "order":
+        vb = parseInt(b.id.replace("gid://shopify/Order/", ""), 10);
+        va = parseInt(a.id.replace("gid://shopify/Order/", ""), 10);
+        break;
+      case "customer":
+        va = a.customer.toLowerCase();
+        vb = b.customer.toLowerCase();
+        break;
+      case "date":
+        va = parseOrderDate(a.date).getTime();
+        vb = parseOrderDate(b.date).getTime();
+        break;
+      case "total":
+        va = parseFloat(a.total);
+        vb = parseFloat(b.total);
+        break;
+      default:
+        return 0;
+    }
+     if (va < vb) return sortDirection === "asc" ? -1 : 1;
       if (va > vb) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
-    return result;
-  }, [paginatedOrdersRaw, sortSelected]);
+    return sortDirection === "asc" ? va - vb : vb - va;
+    
+  });
+
+  return result;
+}, [filteredOrders, sortSelected]);
+
+const paginatedOrders = useMemo(() => {
+  return sortedOrders.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+}, [sortedOrders, currentPage]);
 
   const handleMonthChange = useCallback(
     (month, year) => setDate({ month, year }),
@@ -199,7 +203,6 @@ const filteredOrders = useMemo(() => {
     },
     [paginatedOrders],
   );
-
   const allResourcesSelected =
     paginatedOrders.length > 0 &&
     paginatedOrders.every((o) => selectedResources.includes(o.id));
@@ -209,7 +212,6 @@ const filteredOrders = useMemo(() => {
   const handleExport = useCallback(
     async (selectedOrders = filteredOrders) => {
       setButtonLoding(true)
-      console.log('----------------------------------')
       const now = new Date();
       let startTime, endTime;
       setTimeError(false);
@@ -247,7 +249,6 @@ const filteredOrders = useMemo(() => {
         const orderDate = parseOrderDate(order.date);
         return orderDate >= startTime && orderDate <= endTime;
       });
-console.log(ordersToExport,"ordersToExport")
       if (ordersToExport.length === 0) {
         setToastActive(true);
         setExportModalOpen(false);
@@ -266,6 +267,7 @@ console.log(ordersToExport,"ordersToExport")
 
         const data = await res.json();
         if (data.success) {
+          setSelectedResources([]);
           setButtonLoding(false)
           const link = document.createElement("a");
           link.href = data.filePath;
@@ -273,6 +275,7 @@ console.log(ordersToExport,"ordersToExport")
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
+         
         } else {
           setButtonLoding(false)
           console.error("Export failed", data.error);
@@ -284,6 +287,7 @@ console.log(ordersToExport,"ordersToExport")
         setToastActive(true);
       }
       setExportModalOpen(false);
+
     },
     [
       exportOption,
@@ -353,6 +357,7 @@ console.log(ordersToExport,"ordersToExport")
         items,
         refunds,
         properties,
+        tag
       },
       index,
     ) => (
@@ -363,7 +368,7 @@ console.log(ordersToExport,"ordersToExport")
         position={index}
       >
         {condensed ? (
-          <div style={{ padding: "12px 16px", width: "100%" }}>
+          <div style={{ padding: "12px 16px", width: "100%" }} className="tag-new">
             <BlockStack gap="200">
               <InlineStack gap="200" align="start">
                 <Text variant="bodyMd" fontWeight="semibold" as="span">

@@ -14,14 +14,16 @@ export const action = async ({ request }) => {
   try {
     await connectDB();
     const { orders, filters } = await request.json();
-
-      if (!orders || !Array.isArray(orders) || orders.length === 0) {
+    if (!orders || !Array.isArray(orders) || orders.length === 0) {
       return json({ error: "No orders to export" }, { status: 400 });
-        }
+    }
 
-        if (orders.length > 100) {
-          return json({ error: "You can export only 100 orders at a time" }, { status: 400 });
-        }
+    if (orders.length > 100) {
+      return json(
+        { error: "You can export only 100 orders at a time" },
+        { status: 400 },
+      );
+    }
 
     // Static CSV Headers
     const headers = [
@@ -51,7 +53,7 @@ export const action = async ({ request }) => {
       "DELIVERY ADDRESS LINE 4",
       "DELIVERY COUNTRY",
       "DELIVERY POST CODE",
-      "DELIVERY METHOD"
+      "DELIVERY METHOD",
     ];
 
     // Flatten orders → multiple rows for multiple line items
@@ -60,9 +62,22 @@ export const action = async ({ request }) => {
         console.warn(`Order ${orderIndex} has no lineItems`);
         return [];
       }
+      function extractMotifs(props) {
+        const motifs = [];
+
+        for (const key in props) {
+          if (key.toLowerCase().startsWith("motifs")) {
+            motifs.push(props[key]);
+          }
+        }
+
+        return motifs.join(",");
+      }
 
       return o.lineItems.map((item) => {
+        
         const rawProps = item.properties || {};
+        //  console.log(rawProps,"ordersordersorders")
 
         // 🧠 Choose parser based on channel
         let props = {};
@@ -71,8 +86,8 @@ export const action = async ({ request }) => {
         } else {
           props = normalizeProps(rawProps);
         }
-       console.log(props,"propspropspropsprops")
-        const motifValue = props["motif code"] || props["motifs"] || "";
+        
+        const motifValue = props["motif code"] || extractMotifs(props) || "";
 
         const row = [
           "4670", // CUSTOMER CODE (static)
@@ -82,13 +97,25 @@ export const action = async ({ request }) => {
           props["background color"] || "",
           props["text color"] || "",
           motifValue,
-          props["font style"] || props["text style"] ||  props["font style 1"] || props["text style 1"] || "",
-          props["text line 1"] ||props["Text Line 1"] || "",
-          props["font style 2"] || props["text style 2"] ||  props["font style"] || props["text style"] || "",
+          props["font style"] ||
+            props["text style"] ||
+            props["font style 1"] ||
+            props["text style 1"] ||
+            "",
+          props["text line 1"] || props["Text Line 1"] || "",
+          props["font style 2"] ||
+            props["text style 2"] ||
+            props["font style"] ||
+            props["text style"] ||
+            "",
           props["text line 2"] || "",
-          props["font style 3"] || props["text style 3"] ||  props["font style"] || props["text style"] || "",
+          props["font style 3"] ||
+            props["text style 3"] ||
+            props["font style"] ||
+            props["text style"] ||
+            "",
           props["text line 3"] || "",
-          props["font style 4"] || props["text style 4"] ||  "",
+          props["font style 4"] || props["text style 4"] || "",
           props["text line 4"] || "",
           props["font style 5"] || props["text style 5"] || "",
           props["text line 5"] || "",
@@ -101,7 +128,7 @@ export const action = async ({ request }) => {
           o.address?.address4 || "",
           o.address?.country || "",
           o.address?.zip || "",
-          o.deliveryMethod || ""
+          o.deliveryMethod || "",
         ];
 
         return row.map(escapeCsvField).join(",");
@@ -152,12 +179,15 @@ export const action = async ({ request }) => {
                 id: `gid://shopify/Order/${order?.id}`,
                 tags: ["exported"],
               },
-            }
+            },
           );
 
           const data = await response.json();
           if (data.data.orderUpdate.userErrors.length > 0) {
-            console.error(`Failed to tag order ${order.id}:`, data.data.orderUpdate.userErrors);
+            console.error(
+              `Failed to tag order ${order.id}:`,
+              data.data.orderUpdate.userErrors,
+            );
           } else {
             console.log(`Tagged order ${order.id} as exported`);
           }
@@ -204,11 +234,18 @@ function parseAmazonProperties(rawProps) {
       // 🎯 Map each property to CSV-relevant fields
       if (lowerKey === "color") {
         parsed["background color"] = kv["optionvalue"] || "";
-      } else if (lowerKey.startsWith("line 1 text") || lowerKey.startsWith("Text Line 1") || lowerKey.startsWith("Name for Labels") ) {
-        parsed["v"] = kv["text"] ||  "";
+      } else if (
+        lowerKey.startsWith("line 1 text") ||
+        lowerKey.startsWith("Text Line 1") ||
+        lowerKey.startsWith("Name for Labels")
+      ) {
+        parsed["v"] = kv["text"] || "";
         parsed["text color"] = kv["colorname"] || "";
         parsed["font style"] = kv["fontfamily"] || "";
-      } else if (lowerKey.startsWith("line 2 text") || lowerKey.startsWith("Text Line 2 (optional)")) {
+      } else if (
+        lowerKey.startsWith("line 2 text") ||
+        lowerKey.startsWith("Text Line 2 (optional)")
+      ) {
         parsed["text line 2"] = kv["text"] || "";
       } else if (lowerKey.startsWith("line 3 text")) {
         parsed["text line 3"] = kv["text"] || "";
@@ -218,7 +255,10 @@ function parseAmazonProperties(rawProps) {
         parsed["text line 5"] = kv["text"] || "";
       } else if (lowerKey.startsWith("line 6 text")) {
         parsed["text line 6"] = kv["text"] || "";
-      } else if (lowerKey.startsWith("motif") || lowerKey.startsWith("Motif (Left of Text)")) {
+      } else if (
+        lowerKey.startsWith("motif") ||
+        lowerKey.startsWith("Motif (Left of Text)")
+      ) {
         // Extract only code part before "-"
         const motif = kv["optionvalue"]?.split("-")?.[0]?.trim() || "";
         parsed["motif code"] = motif;
@@ -233,14 +273,16 @@ function parseAmazonProperties(rawProps) {
 function escapeCsvField(value) {
   if (value === null || value === undefined) return "";
   const s = String(value);
-  const needQuotes = s.includes(",") || s.includes("\n") || s.includes('"') || s.includes("\r");
+  const needQuotes =
+    s.includes(",") || s.includes("\n") || s.includes('"') || s.includes("\r");
   const escaped = s.replace(/"/g, '""');
   return needQuotes ? `"${escaped}"` : escaped;
 }
 
 // ✅ Format filename timestamp
 function formatForFilename(dateObj) {
-  if (!dateObj || !(dateObj instanceof Date) || isNaN(dateObj.getTime())) return "all";
+  if (!dateObj || !(dateObj instanceof Date) || isNaN(dateObj.getTime()))
+    return "all";
   const y = dateObj.getFullYear();
   const m = String(dateObj.getMonth() + 1).padStart(2, "0");
   const d = String(dateObj.getDate()).padStart(2, "0");

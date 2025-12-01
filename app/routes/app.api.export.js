@@ -71,8 +71,8 @@ export const action = async ({ request }) => {
         } else {
           props = normalizeProps(rawProps);
         }
-
-        const motifValue = props["motif code"] || "";
+       console.log(props,"propspropspropsprops")
+        const motifValue = props["motif code"] || props["motifs"] || "";
 
         const row = [
           "4670", // CUSTOMER CODE (static)
@@ -96,7 +96,7 @@ export const action = async ({ request }) => {
           props["text line 6"] || "",
           o.customer || "",
           o.address?.address1 || "",
-          o.address?.address2 || "",
+          o.address?.city || "",
           o.address?.address3 || "",
           o.address?.address4 || "",
           o.address?.country || "",

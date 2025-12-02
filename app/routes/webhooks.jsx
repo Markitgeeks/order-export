@@ -110,12 +110,9 @@ export const action = async ({ request }) => {
       await saveOrder(payload);
       break;
     case "ORDERS_UPDATED":
-      console.log(payload, "executing ::: ORDERS_UPDATED webhook");
-      await saveOrder(payload);
-      break;
-    case "ORDERS_CANCELLED":
       const orderPayloadId = payload?.id;
       console.log(orderPayloadId, "ORDER PAYLOAD ID");
+
       const { admin } = await authenticate.admin(request);
       const response = await admin.graphql(
         `#graphql
@@ -142,6 +139,38 @@ export const action = async ({ request }) => {
       console.log(response, "Mutation Response");
       await saveOrder(payload);
       break;
+
+    // case "ORDERS_CANCELLED":
+        
+    //   const orderPayloadId = payload?.id;
+    //   console.log(orderPayloadId, "ORDER PAYLOAD ID");
+
+    //   const { admin } = await authenticate.admin(request);
+    //   const response = await admin.graphql(
+    //     `#graphql
+    //             mutation AddTag($id: ID!) {
+    //         tagsAdd(id: $id, tags: ["exported"]) {
+    //             userErrors {
+    //             field
+    //             message
+    //             }
+    //             node {
+    //             id
+    //             }
+    //         }
+    //         }
+    //   `,
+    //     {
+    //       variables: {
+    //         id: `gid://shopify/Order/${orderPayloadId}`,
+    //         tags: ["exported"],
+    //       },
+    //     },
+    //   );
+
+    //   console.log(response, "Mutation Response");
+    //   await saveOrder(payload);
+    //   break;
 
     default:
       console.log("--topic--", topic);

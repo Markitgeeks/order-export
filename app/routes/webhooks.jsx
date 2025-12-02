@@ -109,68 +109,49 @@ export const action = async ({ request }) => {
       console.log("executing ::: ORDERS_CREATE webhook");
       await saveOrder(payload);
       break;
+
     case "ORDERS_UPDATED":
-      const orderPayloadId = payload?.id;
-      console.log(orderPayloadId, "ORDER PAYLOAD ID");
-
-      const { admin } = await authenticate.admin(request);
-      const response = await admin.graphql(
-        `#graphql
-                mutation AddTag($id: ID!) {
-            tagsAdd(id: $id, tags: ["exported"]) {
-                userErrors {
-                field
-                message
-                }
-                node {
-                id
-                }
-            }
-            }
-      `,
-        {
-          variables: {
-            id: `gid://shopify/Order/${orderPayloadId}`,
-            tags: ["exported"],
-          },
-        },
-      );
-
-      console.log(response, "Mutation Response");
+      console.log("executing ::: ORDERS_CREATE webhook");
       await saveOrder(payload);
       break;
 
-    // case "ORDERS_CANCELLED":
-        
-    //   const orderPayloadId = payload?.id;
-    //   console.log(orderPayloadId, "ORDER PAYLOAD ID");
+     case 'ORDERS_CANCELLED': {
+      const { admin } = await authenticate.admin(request);
+      const payload = await request.json();
+      const orderId = payload.admin_graphql_api_id;
+     console.log(payload,"payloadpayload")
+      // GraphQL mutation to add "exported" tag
+      const mutation = `#graphql
+        mutation AddTag($id: ID!) {
+          tagsAdd(id: $id, tags: ["exported"]) {
+            userErrors {
+              field
+              message
+            }
+            node {
+              id
+            }
+          }
+        }
+      `;
 
-    //   const { admin } = await authenticate.admin(request);
-    //   const response = await admin.graphql(
-    //     `#graphql
-    //             mutation AddTag($id: ID!) {
-    //         tagsAdd(id: $id, tags: ["exported"]) {
-    //             userErrors {
-    //             field
-    //             message
-    //             }
-    //             node {
-    //             id
-    //             }
-    //         }
-    //         }
-    //   `,
-    //     {
-    //       variables: {
-    //         id: `gid://shopify/Order/${orderPayloadId}`,
-    //         tags: ["exported"],
-    //       },
-    //     },
-    //   );
+      const response = await admin.graphql(mutation, {
+        variables: {
+          id: orderId,
+        },
+      });
 
-    //   console.log(response, "Mutation Response");
-    //   await saveOrder(payload);
-    //   break;
+      const data = await response.json();
+      console.log(data,"datadatadata")
+      if (data?.data?.tagsAdd?.userErrors?.length) {
+        console.error('Error adding tag:', data.data.tagsAdd.userErrors);
+      } else {
+        console.log(`Tag "exported" added to order ${orderId}`);
+      }
+        await saveOrder(payload);
+      break;
+    }
+
 
     default:
       console.log("--topic--", topic);

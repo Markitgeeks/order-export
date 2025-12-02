@@ -360,7 +360,7 @@ const paginatedOrders = useMemo(() => {
         tag
       },
       index,
-    ) => (
+    ) => (!refunds  &&
       <IndexTable.Row
         id={id}
         key={id}

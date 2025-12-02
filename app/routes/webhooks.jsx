@@ -107,19 +107,23 @@ export const action = async ({ request }) => {
   switch (topic) {
     case "ORDERS_CREATE":
       console.log("executing ::: ORDERS_CREATE webhook");
-      await saveOrder(payload);
+      if (!payload.refunds || payload.refunds.length === 0) {
+        await saveOrder(payload);
+      }
       break;
 
     case "ORDERS_UPDATED":
       console.log("executing ::: ORDERS_CREATE webhook");
-      await saveOrder(payload);
+      if (!payload.refunds || payload.refunds.length === 0) {
+        await saveOrder(payload);
+      }
       break;
 
-     case 'ORDERS_CANCELLED': {
+    case "ORDERS_CANCELLED": {
       const { admin } = await authenticate.admin(request);
       const payload = await request.json();
       const orderId = payload.admin_graphql_api_id;
-     console.log(payload,"payloadpayload")
+      console.log(payload, "payloadpayload");
       // GraphQL mutation to add "exported" tag
       const mutation = `#graphql
         mutation AddTag($id: ID!) {
@@ -142,16 +146,15 @@ export const action = async ({ request }) => {
       });
 
       const data = await response.json();
-      console.log(data,"datadatadata")
+      console.log(data, "datadatadata");
       if (data?.data?.tagsAdd?.userErrors?.length) {
-        console.error('Error adding tag:', data.data.tagsAdd.userErrors);
+        console.error("Error adding tag:", data.data.tagsAdd.userErrors);
       } else {
         console.log(`Tag "exported" added to order ${orderId}`);
       }
-        await saveOrder(payload);
+      await saveOrder(payload);
       break;
     }
-
 
     default:
       console.log("--topic--", topic);

@@ -24,6 +24,10 @@ sessionStorage: new MongoDBSessionStorage(process.env.DB_URL),
       deliveryMethod: DeliveryMethod.Http,
       callbackUrl: '/webhooks',
     },
+      ORDERS_CANCELLED: {
+      deliveryMethod: DeliveryMethod.Http,
+      callbackUrl: '/webhooks',
+    },
   },
   hooks: {
     afterAuth: async ({ session }) => {

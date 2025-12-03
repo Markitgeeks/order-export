@@ -270,14 +270,21 @@ function parseAmazonProperties(rawProps) {
 }
 
 // ✅ Escape CSV fields correctly
+// function escapeCsvField(value) {
+//   if (value === null || value === undefined) return "";
+//   const s = String(value);
+//   const needQuotes =
+//     s.includes(",") || s.includes("\n") || s.includes('"') || s.includes("\r");
+//   const escaped = s.replace(/"/g, '""');
+//   return needQuotes ? `"${escaped}"` : escaped;
+// }
+
 function escapeCsvField(value) {
-  if (value === null || value === undefined) return "";
-  const s = String(value);
-  const needQuotes =
-    s.includes(",") || s.includes("\n") || s.includes('"') || s.includes("\r");
-  const escaped = s.replace(/"/g, '""');
-  return needQuotes ? `"${escaped}"` : escaped;
+  if (value === null || value === undefined) return '""';
+  const s = String(value).replace(/"/g, '""'); // escape internal quotes
+  return `"${s}"`; // ALWAYS wrap in quotes
 }
+
 
 // ✅ Format filename timestamp
 function formatForFilename(dateObj) {

@@ -109,7 +109,7 @@ export const action = async ({ request }) => {
       break;
 
     case "ORDERS_UPDATED":
-      console.log("executing ::: ORDERS_CREATE webhook");
+      console.log(payload,"executing ::: ORDERS_CREATE webhook");
       if (!payload.refunds || payload.refunds.length === 0) {
         await saveOrder(payload);
       }

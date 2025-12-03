@@ -27,7 +27,7 @@ function OrderManagement({ orders }) {
   const [loading, setLoading] = useState(true);
   const [buttonLoding , setButtonLoding] = useState(false)
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 50;
+  const pageSize = 100;
   const [itemStrings] = useState(["All","Exported","Not Exported","Amazon","Online Store"]);
   const [toastActive, setToastActive] = useState(false);
   const [selected, setSelected] = useState(0);
@@ -54,7 +54,7 @@ function OrderManagement({ orders }) {
   const onHandleCancel = () => {};
   const toastMarkup = toastActive ? (
     <Frame>
-      {orders.length >= 100 ? <Toast
+      {orders.length > 100 ? <Toast
         content="You can export only 100 orders at a time"
         onDismiss={() => {
           setToastActive(false)
@@ -217,7 +217,7 @@ const paginatedOrders = useMemo(() => {
       setTimeError(false);
    
       if (
-        exportOption === "dateRange" &&
+       exportOption === "dateRange" &&
         selectedDates.start &&
         selectedDates.end
       ) {

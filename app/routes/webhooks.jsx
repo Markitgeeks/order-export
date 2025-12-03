@@ -53,11 +53,7 @@ export const action = async ({ request }) => {
         id: payload.id,
         orderNumber: payload.name,
         date: formatShopifyDate(payload.processed_at),
-        refunds:
-          payload.refunds
-            ?.map((ref) => ref.note)
-            .filter(Boolean)
-            .join(", ") || null,
+        refunds: payload.cancelled_at,
         customer: `${payload?.customer?.first_name || ""} ${payload?.customer?.last_name || ""}`,
         total: payload.current_total_price_set?.shop_money?.amount || "0.00",
         paymentStatus: payload.financial_status

@@ -3,6 +3,7 @@ import { authenticate } from "../shopify.server";
 
 export const action = async ({ request }) => {
   const { topic, shop, session, payload } = await authenticate.webhook(request);
+  console.log(payload,"payloadpayloadpayloadpayloadpayload")
   console.log(`:::---Received ${topic} webhook for ${shop}---:::`);
 
   if (topic === "ORDERS_PAID") {
@@ -116,39 +117,7 @@ export const action = async ({ request }) => {
       break;
 
     case "ORDERS_CANCELLED": {
-      const { admin } = await authenticate.admin(request);
-      const payload = await request.json();
-      const orderId = payload.admin_graphql_api_id;
-      console.log(payload, "payloadpayload");
-      // GraphQL mutation to add "exported" tag
-      const mutation = `#graphql
-        mutation AddTag($id: ID!) {
-          tagsAdd(id: $id, tags: ["exported"]) {
-            userErrors {
-              field
-              message
-            }
-            node {
-              id
-            }
-          }
-        }
-      `;
-
-      const response = await admin.graphql(mutation, {
-        variables: {
-          id: orderId,
-        },
-      });
-
-      const data = await response.json();
-      console.log(data, "datadatadata");
-      if (data?.data?.tagsAdd?.userErrors?.length) {
-        console.error("Error adding tag:", data.data.tagsAdd.userErrors);
-      } else {
-        console.log(`Tag "exported" added to order ${orderId}`);
-      }
-      await saveOrder(payload);
+    await Order.deleteOne({ orderNumber: payload?.name });
       break;
     }
 

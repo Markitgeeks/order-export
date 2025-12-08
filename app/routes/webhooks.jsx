@@ -117,6 +117,7 @@ export const action = async ({ request }) => {
       break;
 
     case "ORDERS_CANCELLED": {
+    console.log(payload,"executing ::: ORDERS_CANCELLED");
     await Order.deleteOne({ orderNumber: payload?.name });
       break;
     }

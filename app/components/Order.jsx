@@ -28,7 +28,7 @@ function OrderManagement({ orders }) {
   const [buttonLoding , setButtonLoding] = useState(false)
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 100;
-  const [itemStrings] = useState(["All","Exported","Not Exported","Amazon","Online Store"]);
+  const [itemStrings] = useState(["All","Exported","Not Exported","Amazon","Online Store","Unfulfilled","Paid"]);
   const [toastActive, setToastActive] = useState(false);
   const [selected, setSelected] = useState(0);
  const [sortSelected, setSortSelected] = useState(["date desc"]);
@@ -125,6 +125,13 @@ const filteredOrders = useMemo(() => {
    else if (selected === 4) {
     result = result.filter((o) => o.channels?.includes("Online Store"));
   }
+    else if (selected === 5) {
+    result = result.filter((o) => o.fulfillmentStatus?.includes("Unfulfilled"));
+  }
+    else if (selected === 6) {
+    result = result.filter((o) => o.paymentStatus?.includes("Paid"));
+  }
+
   return result;
 }, [orders, queryValue, selected]);
 

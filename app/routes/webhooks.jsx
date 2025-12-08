@@ -58,9 +58,11 @@ export const action = async ({ request }) => {
         customer: `${payload?.customer?.first_name || ""} ${payload?.customer?.last_name || ""}`,
         total: payload.current_total_price_set?.shop_money?.amount || "0.00",
         paymentStatus: payload.financial_status
-          ? payload.financial_status.charAt(0).toUpperCase() +
-            payload.financial_status.slice(1).toLowerCase()
-          : "Payment pending",
+      ? payload.financial_status
+          .split("_") // Convert ["partially","refunded"]
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(" ") // "Partially Refunded"
+      : "Payment pending",
         fulfillmentStatus: payload.fulfillment_status || "Unfulfilled",
         channels:
           payload?.shipping_lines?.[0]?.source === "shopify"
@@ -110,16 +112,17 @@ export const action = async ({ request }) => {
       break;
 
     case "ORDERS_UPDATED":
-      console.log(payload,"executing ::: ORDERS_UPDATE webhook");
+      console.log(payload,"executing ::: ORDERS_CREATE webhook");
       if (!payload.refunds || payload.refunds.length === 0) {
         await saveOrder(payload);
       }
       break;
 
-    case "ORDERS_CANCELLED":
-    console.log(payload,"executing ::: ORDERS_CANCELLED");
-     await Order.deleteOne({ id: payload.id });
-    break;
+    case "ORDERS_CANCELLED": {
+    console.log(payload,"executing ::: ORDERS_CANCELLED webhook");
+    await Order.deleteOne({ orderNumber: payload?.name });
+      break;
+    }
 
     default:
       console.log("--topic--", topic);

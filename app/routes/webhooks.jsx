@@ -110,17 +110,16 @@ export const action = async ({ request }) => {
       break;
 
     case "ORDERS_UPDATED":
-      console.log(payload,"executing ::: ORDERS_CREATE webhook");
+      console.log(payload,"executing ::: ORDERS_UPDATE webhook");
       if (!payload.refunds || payload.refunds.length === 0) {
         await saveOrder(payload);
       }
       break;
 
-    case "ORDERS_CANCELLED": {
+    case "ORDERS_CANCELLED":
     console.log(payload,"executing ::: ORDERS_CANCELLED");
-    await Order.deleteOne({ orderNumber: payload?.name });
-      break;
-    }
+     await Order.deleteOne({ id: payload.id });
+    break;
 
     default:
       console.log("--topic--", topic);

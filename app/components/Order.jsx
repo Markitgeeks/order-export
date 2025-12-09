@@ -28,7 +28,7 @@ function OrderManagement({ orders }) {
   const [buttonLoding , setButtonLoding] = useState(false)
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 100;
-  const [itemStrings] = useState(["All","Exported","Not Exported","Amazon","Online Store","Unfulfilled","Paid"]);
+  const [itemStrings] = useState(["All","Exported","Amazon","Online Store","To Export"]);
   const [toastActive, setToastActive] = useState(false);
   const [selected, setSelected] = useState(0);
  const [sortSelected, setSortSelected] = useState(["date desc"]);
@@ -112,25 +112,24 @@ const filteredOrders = useMemo(() => {
     );
   }
 
-  if (selected === 1) {
-    // Exported
-    result = result.filter((o) => o.tags?.includes("exported"));
-  } else if (selected === 2) {
-    // Not Exported
-    result = result.filter((o) => !o.tags?.includes("exported"));
-  }
-  else if (selected === 3) {
-    result = result.filter((o) => o.channels?.includes("Amazon"));
-  }
-   else if (selected === 4) {
-    result = result.filter((o) => o.channels?.includes("Online Store"));
-  }
-    else if (selected === 5) {
-    result = result.filter((o) => o.fulfillmentStatus?.includes("Unfulfilled"));
-  }
-    else if (selected === 6) {
-    result = result.filter((o) => o.paymentStatus?.includes("Paid"));
-  }
+
+if (selected === 1) {
+  result = result.filter((o) => o.tags?.includes("exported"));
+}
+else if (selected === 2) {
+result = result.filter((o) => o.channels?.includes("Amazon"));
+} 
+else if (selected === 3) {
+result = result.filter((o) => o.channels?.includes("Online Store"));
+} 
+else if (selected === 4) {
+result = result.filter(
+    (o) =>
+      !o.tags?.includes("exported") &&      
+      o.paymentStatus?.includes("Paid") &&  
+      o.fulfillmentStatus?.includes("Unfulfilled")  
+  );
+}
 
   return result;
 }, [orders, queryValue, selected]);

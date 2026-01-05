@@ -19,19 +19,25 @@ import {
   InlineGrid,
   InlineStack,
   Spinner,
-  EmptyState
+  EmptyState,
 } from "@shopify/polaris";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { TitleBar } from "@shopify/app-bridge-react";
 function OrderManagement({ orders }) {
   const [loading, setLoading] = useState(true);
-  const [buttonLoding , setButtonLoding] = useState(false)
+  const [buttonLoding, setButtonLoding] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 100;
-  const [itemStrings] = useState(["All","Exported","Amazon","Online Store","To Export"]);
+  const [itemStrings] = useState([
+    "All",
+    "Exported",
+    "Amazon",
+    "Online Store",
+    "To Export",
+  ]);
   const [toastActive, setToastActive] = useState(false);
   const [selected, setSelected] = useState(0);
- const [sortSelected, setSortSelected] = useState(["date desc"]);
+  const [sortSelected, setSortSelected] = useState(["date desc"]);
   const { mode, setMode } = useSetIndexFiltersMode();
   const [selectedDates, setSelectedDates] = useState({
     start: new Date(),
@@ -54,19 +60,13 @@ function OrderManagement({ orders }) {
   const onHandleCancel = () => {};
   const toastMarkup = toastActive ? (
     <Frame>
-      {orders.length > 100 ? <Toast
-        content="You can export only 100 orders at a time"
-        onDismiss={() => {
-          setToastActive(false)
-          setButtonLoding(false);
-        }}
-      />: <Toast
+      <Toast
         content="No orders match the selected filters and date range."
         onDismiss={() => {
-          setToastActive(false)
+          setToastActive(false);
           setButtonLoding(false);
         }}
-      />}
+      />
     </Frame>
   ) : null;
 
@@ -99,82 +99,77 @@ function OrderManagement({ orders }) {
   ];
 
   // Filtering
-const filteredOrders = useMemo(() => {
-  let result = [...orders];
+  const filteredOrders = useMemo(() => {
+    let result = [...orders];
 
-  // Search filter
- if (queryValue) {
-    const lowerQuery = queryValue.toLowerCase();
-    result = result.filter(
-      (o) =>
-        o.orderNumber.toLowerCase().includes(lowerQuery) ||
-        o.customer.toLowerCase().includes(lowerQuery),
-    );
-  }
-
-
-if (selected === 1) {
-  result = result.filter((o) => o.tags?.includes("exported"));
-}
-else if (selected === 2) {
-result = result.filter((o) => o.channels?.includes("Amazon"));
-} 
-else if (selected === 3) {
-result = result.filter((o) => o.channels?.includes("Online Store"));
-} 
-else if (selected === 4) {
-result = result.filter(
-    (o) =>
-      !o.tags?.includes("exported") &&      
-      o.paymentStatus?.includes("Paid") &&  
-      o.fulfillmentStatus?.includes("Unfulfilled")  
-  );
-}
-
-  return result;
-}, [orders, queryValue, selected]);
-
-const sortedOrders = useMemo(() => {
-  const [sortKey, sortDirection] = sortSelected[0].split(" ");
-  let result = [...filteredOrders];
-
-  result.sort((a, b) => {
-    let va, vb;
-    switch (sortKey) {
-      case "order":
-        vb = parseInt(b.id.replace("gid://shopify/Order/", ""), 10);
-        va = parseInt(a.id.replace("gid://shopify/Order/", ""), 10);
-        break;
-      case "customer":
-        va = a.customer.toLowerCase();
-        vb = b.customer.toLowerCase();
-        break;
-      case "date":
-        va = parseOrderDate(a.date).getTime();
-        vb = parseOrderDate(b.date).getTime();
-        break;
-      case "total":
-        va = parseFloat(a.total);
-        vb = parseFloat(b.total);
-        break;
-      default:
-        return 0;
+    // Search filter
+    if (queryValue) {
+      const lowerQuery = queryValue.toLowerCase();
+      result = result.filter(
+        (o) =>
+          o.orderNumber.toLowerCase().includes(lowerQuery) ||
+          o.customer.toLowerCase().includes(lowerQuery),
+      );
     }
-     if (va < vb) return sortDirection === "asc" ? -1 : 1;
+
+    if (selected === 1) {
+      result = result.filter((o) => o.tags?.includes("exported"));
+    } else if (selected === 2) {
+      result = result.filter((o) => o.channels?.includes("Amazon"));
+    } else if (selected === 3) {
+      result = result.filter((o) => o.channels?.includes("Online Store"));
+    } else if (selected === 4) {
+      result = result.filter(
+        (o) =>
+          !o.tags?.includes("exported") &&
+          o.paymentStatus?.includes("Paid") &&
+          o.fulfillmentStatus?.includes("Unfulfilled"),
+      );
+    }
+
+    return result;
+  }, [orders, queryValue, selected]);
+
+  const sortedOrders = useMemo(() => {
+    const [sortKey, sortDirection] = sortSelected[0].split(" ");
+    let result = [...filteredOrders];
+
+    result.sort((a, b) => {
+      let va, vb;
+      switch (sortKey) {
+        case "order":
+          vb = parseInt(b.id.replace("gid://shopify/Order/", ""), 10);
+          va = parseInt(a.id.replace("gid://shopify/Order/", ""), 10);
+          break;
+        case "customer":
+          va = a.customer.toLowerCase();
+          vb = b.customer.toLowerCase();
+          break;
+        case "date":
+          va = parseOrderDate(a.date).getTime();
+          vb = parseOrderDate(b.date).getTime();
+          break;
+        case "total":
+          va = parseFloat(a.total);
+          vb = parseFloat(b.total);
+          break;
+        default:
+          return 0;
+      }
+      if (va < vb) return sortDirection === "asc" ? -1 : 1;
       if (va > vb) return sortDirection === "asc" ? 1 : -1;
-    return sortDirection === "asc" ? va - vb : vb - va;
-    
-  });
+      return sortDirection === "asc" ? va - vb : vb - va;
+    });
 
-  return result;
-}, [filteredOrders, sortSelected]);
+    return result;
+  }, [filteredOrders, sortSelected]);
 
-const paginatedOrders = useMemo(() => {
-  return sortedOrders.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-}, [sortedOrders, currentPage]);
+  const paginatedOrders = useMemo(() => {
+    return sortedOrders.slice(
+      (currentPage - 1) * pageSize,
+      currentPage * pageSize,
+    );
+  }, [sortedOrders, currentPage]);
 
   const handleMonthChange = useCallback(
     (month, year) => setDate({ month, year }),
@@ -214,23 +209,24 @@ const paginatedOrders = useMemo(() => {
     paginatedOrders.every((o) => selectedResources.includes(o.id));
 
   // Export Handler
-  
+
   const handleExport = useCallback(
     async (selectedOrders = filteredOrders) => {
-      setButtonLoding(true)
+      setButtonLoding(true);
       const now = new Date();
       let startTime, endTime;
       setTimeError(false);
-   
-      if (
-       exportOption === "dateRange" &&
-        selectedDates.start &&
-        selectedDates.end
-      ) {
-        startTime = new Date(selectedDates.start);
-        endTime = new Date(selectedDates.end);
-        endTime.setHours(23, 59, 59, 999);
-      } else if (exportOption === "timeRange") {
+
+      console.log(exportOption, selectedDates, "DEBUG exportOption");
+
+  // ✅ DATE RANGE FIX
+   if (exportOption === "dateRange" && selectedDates?.start) {
+  startTime = new Date(selectedDates.start);
+  startTime.setHours(0, 0, 0, 0);
+
+  endTime = new Date(selectedDates.end || selectedDates.start);
+  endTime.setHours(23, 59, 59, 999);
+} else if (exportOption === "timeRange") {
         const startHh = parseInt(startHour);
         const startMm = parseInt(startMinute);
         const endHh = parseInt(endHour);
@@ -246,18 +242,30 @@ const paginatedOrders = useMemo(() => {
         endTime = new Date(selectedDate);
         endTime.setHours(endHh, endMm, 0, 0);
 
-      } else {
+      }
+
+      // ✅ DEFAULT (ALL)
+      else {
         startTime = new Date(0);
         endTime = now;
       }
 
-      const ordersToExport = selectedOrders.filter((order) => {
-        const orderDate = parseOrderDate(order.date);
-        return orderDate >= startTime && orderDate <= endTime;
-      });
+      console.log(startTime, "startTime");
+      console.log(endTime, "endTime");
+const ordersToExport = selectedOrders.filter((order) => {
+  const orderDate = parseOrderDate(order.date, startTime);
+  if (!orderDate) return false;
+
+  return orderDate >= startTime && orderDate <= endTime;
+});
+
+
+      console.log(ordersToExport, "ordersToExport");
+
       if (ordersToExport.length === 0) {
         setToastActive(true);
         setExportModalOpen(false);
+        setButtonLoding(false);
         return;
       }
 
@@ -274,26 +282,22 @@ const paginatedOrders = useMemo(() => {
         const data = await res.json();
         if (data.success) {
           setSelectedResources([]);
-          setButtonLoding(false)
           const link = document.createElement("a");
           link.href = data.filePath;
           link.download = data.filename;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
-         
         } else {
-          setButtonLoding(false)
-          console.error("Export failed", data.error);
           setToastActive(true);
         }
       } catch (err) {
-         setButtonLoding(false)
-        console.error("Error hitting export API", err);
+        console.error("Export error", err);
         setToastActive(true);
       }
-      setExportModalOpen(false);
 
+      setButtonLoding(false);
+      setExportModalOpen(false);
     },
     [
       exportOption,
@@ -311,11 +315,11 @@ const paginatedOrders = useMemo(() => {
   const promotedBulkActions = [
     {
       title: "Export",
-      loading:buttonLoding,
+      loading: buttonLoding,
       actions: [
         {
           content: "Export as CSV",
-          
+
           onAction: () => {
             const selectedOrders = filteredOrders.filter((order) =>
               selectedResources.includes(order.id),
@@ -363,36 +367,103 @@ const paginatedOrders = useMemo(() => {
         items,
         refunds,
         properties,
-        tag
+        tag,
       },
       index,
-    ) => (!refunds  &&
-      <IndexTable.Row
-        id={id}
-        key={id}
-        selected={selectedResources.includes(id)}
-        position={index}
-      >
-        {condensed ? (
-          <div style={{ padding: "12px 16px", width: "100%" }} className="tag-new">
-            <BlockStack gap="200">
-              <InlineStack gap="200" align="start">
-                <Text variant="bodyMd" fontWeight="semibold" as="span">
+    ) =>
+      !refunds && (
+        <IndexTable.Row
+          id={id}
+          key={id}
+          selected={selectedResources.includes(id)}
+          position={index}
+        >
+          {condensed ? (
+            <div
+              style={{ padding: "12px 16px", width: "100%" }}
+              className="tag-new"
+            >
+              <BlockStack gap="200">
+                <InlineStack gap="200" align="start">
+                  <Text variant="bodyMd" fontWeight="semibold" as="span">
+                    {orderNumber}
+                  </Text>
+                  <Text variant="bodySm" as="span" tone="subdued">
+                    {date}
+                  </Text>
+                </InlineStack>
+                <InlineStack align="space-between">
+                  <Text as="span" variant="bodyMd">
+                    {customer}
+                  </Text>
+                  <Text as="span" variant="bodyMd" alignment="end">
+                    {`$${total}`}
+                  </Text>
+                </InlineStack>
+                <InlineStack gap="200">
+                  {paymentStatus === "Paid" ? (
+                    <Badge progress={paymentProgress}>{paymentStatus}</Badge>
+                  ) : (
+                    <Badge tone="warning" progress={paymentProgress}>
+                      {paymentStatus}
+                    </Badge>
+                  )}
+                  {fulfillmentStatus === "Unfulfilled" ? (
+                    <Badge tone="attention" progress={fulfillmentProgress}>
+                      {fulfillmentStatus}
+                    </Badge>
+                  ) : (
+                    <Badge progress={fulfillmentProgress}>
+                      {fulfillmentStatus}
+                    </Badge>
+                  )}
+                </InlineStack>
+                <BlockStack gap="100">
+                  <Text as="span" variant="bodySm" tone="subdued">
+                    Delivery: {deliveryMethod}
+                  </Text>
+                  <Text as="span" variant="bodySm" tone="subdued">
+                    Channel: {channels || "N/A"}
+                  </Text>
+                  <Text as="span" variant="bodySm" tone="subdued">
+                    Items:{" "}
+                    {Array.isArray(items) ? items.join(", ") : items || "N/A"}
+                  </Text>
+                </BlockStack>
+              </BlockStack>
+            </div>
+          ) : (
+            <>
+              <IndexTable.Cell>
+                <Text
+                  variant="bodyMd"
+                  fontWeight="semibold"
+                  as="span"
+                  textDecorationLine={refunds ? "line-through" : "none"}
+                >
                   {orderNumber}
                 </Text>
-                <Text variant="bodySm" as="span" tone="subdued">
+              </IndexTable.Cell>
+              <IndexTable.Cell>
+                <Text textDecorationLine={refunds ? "line-through" : "none"}>
                   {date}
                 </Text>
-              </InlineStack>
-              <InlineStack align="space-between">
-                <Text as="span" variant="bodyMd">
+              </IndexTable.Cell>
+              <IndexTable.Cell>
+                <Text textDecorationLine={refunds ? "line-through" : "none"}>
                   {customer}
                 </Text>
-                <Text as="span" variant="bodyMd" alignment="end">
+              </IndexTable.Cell>
+              <IndexTable.Cell>
+                <Text
+                  as="span"
+                  textDecorationLine={refunds ? "line-through" : "none"}
+                  numeric
+                >
                   {`$${total}`}
                 </Text>
-              </InlineStack>
-              <InlineStack gap="200">
+              </IndexTable.Cell>
+              <IndexTable.Cell>
                 {paymentStatus === "Paid" ? (
                   <Badge progress={paymentProgress}>{paymentStatus}</Badge>
                 ) : (
@@ -400,6 +471,8 @@ const paginatedOrders = useMemo(() => {
                     {paymentStatus}
                   </Badge>
                 )}
+              </IndexTable.Cell>
+              <IndexTable.Cell>
                 {fulfillmentStatus === "Unfulfilled" ? (
                   <Badge tone="attention" progress={fulfillmentProgress}>
                     {fulfillmentStatus}
@@ -409,122 +482,52 @@ const paginatedOrders = useMemo(() => {
                     {fulfillmentStatus}
                   </Badge>
                 )}
-              </InlineStack>
-              <BlockStack gap="100">
-                <Text as="span" variant="bodySm" tone="subdued">
-                  Delivery: {deliveryMethod}
+              </IndexTable.Cell>
+              <IndexTable.Cell>
+                <Text textDecorationLine={refunds ? "line-through" : "none"}>
+                  {deliveryMethod}
                 </Text>
-                <Text as="span" variant="bodySm" tone="subdued">
-                  Channel: {channels || "N/A"}
+              </IndexTable.Cell>
+              <IndexTable.Cell>
+                <Text textDecorationLine={refunds ? "line-through" : "none"}>
+                  {channels || " "}
                 </Text>
-                <Text as="span" variant="bodySm" tone="subdued">
-                  Items:{" "}
-                  {Array.isArray(items) ? items.join(", ") : items || "N/A"}
-                </Text>
-              </BlockStack>
-            </BlockStack>
-          </div>
-        ) : (
-          <>
-            <IndexTable.Cell>
-              <Text
-                variant="bodyMd"
-                fontWeight="semibold"
-                as="span"
-                textDecorationLine={refunds ? "line-through" : "none"}
-              >
-                {orderNumber}
-              </Text>
-            </IndexTable.Cell>
-            <IndexTable.Cell>
-              <Text textDecorationLine={refunds ? "line-through" : "none"}>
-                {date}
-              </Text>
-            </IndexTable.Cell>
-            <IndexTable.Cell>
-              <Text textDecorationLine={refunds ? "line-through" : "none"}>
-                {customer}
-              </Text>
-            </IndexTable.Cell>
-            <IndexTable.Cell>
-              <Text
-                as="span"
-                textDecorationLine={refunds ? "line-through" : "none"}
-                numeric
-              >
-                {`$${total}`}
-              </Text>
-            </IndexTable.Cell>
-            <IndexTable.Cell>
-              {paymentStatus === "Paid" ? (
-                <Badge progress={paymentProgress}>{paymentStatus}</Badge>
-              ) : (
-                <Badge tone="warning" progress={paymentProgress}>
-                  {paymentStatus}
-                </Badge>
-              )}
-            </IndexTable.Cell>
-            <IndexTable.Cell>
-              {fulfillmentStatus === "Unfulfilled" ? (
-                <Badge tone="attention" progress={fulfillmentProgress}>
-                  {fulfillmentStatus}
-                </Badge>
-              ) : (
-                <Badge progress={fulfillmentProgress}>
-                  {fulfillmentStatus}
-                </Badge>
-              )}
-            </IndexTable.Cell>
-            <IndexTable.Cell>
-              <Text textDecorationLine={refunds ? "line-through" : "none"}>
-                {deliveryMethod}
-              </Text>
-            </IndexTable.Cell>
-            <IndexTable.Cell>
-              <Text textDecorationLine={refunds ? "line-through" : "none"}>
-                {channels || " "}
-              </Text>
-            </IndexTable.Cell>
-            <IndexTable.Cell>
-              {Array.isArray(items) ? items.join(", ") : items || " "}
-            </IndexTable.Cell>
-          </>
-        )}
-      </IndexTable.Row>
-    ),
+              </IndexTable.Cell>
+              <IndexTable.Cell>
+                {Array.isArray(items) ? items.join(", ") : items || " "}
+              </IndexTable.Cell>
+            </>
+          )}
+        </IndexTable.Row>
+      ),
   );
   return (
     <>
-      <Page
-        fullWidth
-      >
+      <Page fullWidth>
         <TitleBar title="Order Export">
-         <button onClick={() => setExportModalOpen(true)}>Export</button>
+          <button onClick={() => setExportModalOpen(true)}>Export</button>
         </TitleBar>
         {buttonLoding && (
-  <div
-    style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      background: "rgba(255,255,255,0.7)",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 9999,
-    }}
-  >
-    <Spinner accessibilityLabel="Exporting orders..." size="large" />
-  </div>
-)}
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              background: "rgba(255,255,255,0.7)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 9999,
+            }}
+          >
+            <Spinner accessibilityLabel="Exporting orders..." size="large" />
+          </div>
+        )}
         {!loading ? (
-          
           <LegacyCard>
-            
             <Box paddingBlockEnd="400">
-            
               <IndexFilters
                 sortOptions={sortOptions}
                 sortSelected={sortSelected}
@@ -601,7 +604,7 @@ const paginatedOrders = useMemo(() => {
         primaryAction={{
           content: "Export",
           onAction: () => handleExport(),
-          loading:buttonLoding,
+          loading: buttonLoding,
         }}
         secondaryActions={[
           {
@@ -719,26 +722,30 @@ const paginatedOrders = useMemo(() => {
   );
 
   // Helpers
-  function parseOrderDate(dateStr) {
-    try {
-      if (dateStr instanceof Date) return dateStr;
-      const maybeISO = new Date(dateStr);
-      if (!isNaN(maybeISO.getTime())) return maybeISO;
-      const currentYear = new Date().getFullYear();
-      let formatted = String(dateStr);
-      if (formatted.includes(" at ")) {
-        formatted = formatted.replace(" at ", ` ${currentYear} `);
-      }
-      if (!/\d{4}/.test(formatted)) {
-        formatted = `${formatted} ${currentYear}`;
-      }
+function parseOrderDate(dateStr, referenceDate = new Date()) {
+  try {
+    if (!dateStr) return null;
+    if (dateStr instanceof Date) return dateStr;
+
+    const str = String(dateStr).trim();
+    const year = referenceDate.getFullYear();
+
+    // ✅ Shopify format: "31 Dec at 7:44 PM"
+    if (/at/i.test(str)) {
+      const formatted = `${str.replace(" at ", " ")} ${year}`;
       const parsed = new Date(formatted);
-      if (isNaN(parsed.getTime())) return new Date(0);
-      return parsed;
-    } catch {
-      return new Date(0);
+      return isNaN(parsed.getTime()) ? null : parsed;
     }
+
+    // ✅ ISO / normal formats
+    const parsed = new Date(str);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  } catch {
+    return null;
   }
+}
+
+
 }
 
 export default OrderManagement;

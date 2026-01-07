@@ -446,25 +446,23 @@ const ordersToExport = selectedOrders.filter((order) => {
                   variant="bodyMd"
                   fontWeight="semibold"
                   as="span"
-                  textDecorationLine={refunds ? "line-through" : "none"}
                 >
                   {orderNumber}
                 </Text>
               </IndexTable.Cell>
               <IndexTable.Cell>
-                <Text textDecorationLine={refunds ? "line-through" : "none"}>
+                <Text >
                   {date}
                 </Text>
               </IndexTable.Cell>
               <IndexTable.Cell>
-                <Text textDecorationLine={refunds ? "line-through" : "none"}>
+                <Text>
                   {customer}
                 </Text>
               </IndexTable.Cell>
               <IndexTable.Cell>
                 <Text
                   as="span"
-                  textDecorationLine={refunds ? "line-through" : "none"}
                   numeric
                 >
                   {`$${total}`}
@@ -491,12 +489,12 @@ const ordersToExport = selectedOrders.filter((order) => {
                 )}
               </IndexTable.Cell>
               <IndexTable.Cell>
-                <Text textDecorationLine={refunds ? "line-through" : "none"}>
+                <Text >
                   {deliveryMethod}
                 </Text>
               </IndexTable.Cell>
               <IndexTable.Cell>
-                <Text textDecorationLine={refunds ? "line-through" : "none"}>
+                <Text>
                   {channels || " "}
                 </Text>
               </IndexTable.Cell>

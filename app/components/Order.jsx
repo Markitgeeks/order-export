@@ -37,6 +37,7 @@ function OrderManagement({ orders }) {
   ]);
   const [toastActive, setToastActive] = useState(false);
   const [selected, setSelected] = useState(0);
+  const [toastMessage, setToastMessage] = useState("");
   const [sortSelected, setSortSelected] = useState(["date desc"]);
   const { mode, setMode } = useSetIndexFiltersMode();
   const [selectedDates, setSelectedDates] = useState({
@@ -57,25 +58,19 @@ function OrderManagement({ orders }) {
   const [startMinute, setStartMinute] = useState("00");
   const [endHour, setEndHour] = useState("23");
   const [endMinute, setEndMinute] = useState("59");
-  const onHandleCancel = () => {};
+  const onHandleCancel = () => { };
   const toastMarkup = toastActive ? (
-     <Frame>
-      {console.log(orders.length,"lenght of order")}
-      {orders.length > 100 ? <Toast
-        content="You can export only 100 orders at a time"
+    <Frame>
+      <Toast
+        content={toastMessage}
         onDismiss={() => {
-          setToastActive(false)
+          setToastActive(false);
           setButtonLoding(false);
         }}
-      />: <Toast
-        content="No orders match the selected filters and date range."
-        onDismiss={() => {
-          setToastActive(false)
-          setButtonLoding(false);
-        }}
-      />}
+      />
     </Frame>
   ) : null;
+
 
   const viewTabs = useMemo(
     () =>
@@ -226,14 +221,14 @@ function OrderManagement({ orders }) {
 
       console.log(exportOption, selectedDates, "DEBUG exportOption");
 
-  // ✅ DATE RANGE FIX
-   if (exportOption === "dateRange" && selectedDates?.start) {
-  startTime = new Date(selectedDates.start);
-  startTime.setHours(0, 0, 0, 0);
+      // ✅ DATE RANGE FIX
+      if (exportOption === "dateRange" && selectedDates?.start) {
+        startTime = new Date(selectedDates.start);
+        startTime.setHours(0, 0, 0, 0);
 
-  endTime = new Date(selectedDates.end || selectedDates.start);
-  endTime.setHours(23, 59, 59, 999);
-} else if (exportOption === "timeRange") {
+        endTime = new Date(selectedDates.end || selectedDates.start);
+        endTime.setHours(23, 59, 59, 999);
+      } else if (exportOption === "timeRange") {
         const startHh = parseInt(startHour);
         const startMm = parseInt(startMinute);
         const endHh = parseInt(endHour);
@@ -259,22 +254,32 @@ function OrderManagement({ orders }) {
 
       console.log(startTime, "startTime");
       console.log(endTime, "endTime");
-const ordersToExport = selectedOrders.filter((order) => {
-  const orderDate = parseOrderDate(order.date, startTime);
-  if (!orderDate) return false;
+      const ordersToExport = selectedOrders.filter((order) => {
+        const orderDate = parseOrderDate(order.date, startTime);
+        if (!orderDate) return false;
 
-  return orderDate >= startTime && orderDate <= endTime;
-});
+        return orderDate >= startTime && orderDate <= endTime;
+      });
 
 
       console.log(ordersToExport, "ordersToExport");
 
       if (ordersToExport.length === 0) {
+        setToastMessage("No orders match the selected filters and date range.");
         setToastActive(true);
         setExportModalOpen(false);
         setButtonLoding(false);
         return;
       }
+
+      if (ordersToExport.length > 100) {
+        setToastMessage("You can export only 100 orders at a time");
+        setToastActive(true);
+        setExportModalOpen(false);
+        setButtonLoding(false);
+        return;
+      }
+
 
       try {
         const res = await fetch("/app/api/export", {
@@ -296,12 +301,15 @@ const ordersToExport = selectedOrders.filter((order) => {
           link.click();
           document.body.removeChild(link);
         } else {
+          setToastMessage("Failed to export orders.");
           setToastActive(true);
         }
       } catch (err) {
         console.error("Export error", err);
+        setToastMessage("Something went wrong while exporting orders. Please try again.");
         setToastActive(true);
       }
+
 
       setButtonLoding(false);
       setExportModalOpen(false);
@@ -727,28 +735,28 @@ const ordersToExport = selectedOrders.filter((order) => {
   );
 
   // Helpers
-function parseOrderDate(dateStr, referenceDate = new Date()) {
-  try {
-    if (!dateStr) return null;
-    if (dateStr instanceof Date) return dateStr;
+  function parseOrderDate(dateStr, referenceDate = new Date()) {
+    try {
+      if (!dateStr) return null;
+      if (dateStr instanceof Date) return dateStr;
 
-    const str = String(dateStr).trim();
-    const year = referenceDate.getFullYear();
+      const str = String(dateStr).trim();
+      const year = referenceDate.getFullYear();
 
-    // ✅ Shopify format: "31 Dec at 7:44 PM"
-    if (/at/i.test(str)) {
-      const formatted = `${str.replace(" at ", " ")} ${year}`;
-      const parsed = new Date(formatted);
+      // ✅ Shopify format: "31 Dec at 7:44 PM"
+      if (/at/i.test(str)) {
+        const formatted = `${str.replace(" at ", " ")} ${year}`;
+        const parsed = new Date(formatted);
+        return isNaN(parsed.getTime()) ? null : parsed;
+      }
+
+      // ✅ ISO / normal formats
+      const parsed = new Date(str);
       return isNaN(parsed.getTime()) ? null : parsed;
+    } catch {
+      return null;
     }
-
-    // ✅ ISO / normal formats
-    const parsed = new Date(str);
-    return isNaN(parsed.getTime()) ? null : parsed;
-  } catch {
-    return null;
   }
-}
 
 
 }

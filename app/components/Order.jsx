@@ -386,7 +386,7 @@ function OrderManagement({ orders }) {
       },
       index,
     ) =>
-      !refunds && (
+      (!refunds || refunds.length === 0) && (
         <IndexTable.Row
           id={id}
           key={id}

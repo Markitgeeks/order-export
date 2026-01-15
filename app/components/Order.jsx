@@ -24,6 +24,7 @@ import {
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { TitleBar } from "@shopify/app-bridge-react";
 function OrderManagement({ orders }) {
+  console.log(parseOrderDate("15 Jan at 12:00 PM"));
   const [loading, setLoading] = useState(true);
   const [buttonLoding, setButtonLoding] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -214,6 +215,7 @@ function OrderManagement({ orders }) {
 
   const handleExport = useCallback(
     async (selectedOrders = filteredOrders) => {
+      console.log(filteredOrders,"filteredOrdersfilteredOrders")
       setButtonLoding(true);
       const now = new Date();
       let startTime, endTime;
@@ -255,7 +257,7 @@ function OrderManagement({ orders }) {
       console.log(startTime, "startTime");
       console.log(endTime, "endTime");
       const ordersToExport = selectedOrders.filter((order) => {
-        const orderDate = parseOrderDate(order.date, startTime);
+        const orderDate = parseOrderDate(order.date);
         if (!orderDate) return false;
 
         return orderDate >= startTime && orderDate <= endTime;
@@ -735,29 +737,51 @@ function OrderManagement({ orders }) {
   );
 
   // Helpers
-  function parseOrderDate(dateStr, referenceDate = new Date()) {
-    try {
-      if (!dateStr) return null;
-      if (dateStr instanceof Date) return dateStr;
 
-      const str = String(dateStr).trim();
-      const year = referenceDate.getFullYear();
+  function parseOrderDate(dateStr) {
+    
+  const referenceDate = new Date();
+  try {
+    if (!dateStr) return null;
+    if (dateStr instanceof Date) return dateStr;
 
-      // ✅ Shopify format: "31 Dec at 7:44 PM"
-      if (/at/i.test(str)) {
-        const formatted = `${str.replace(" at ", " ")} ${year}`;
-        const parsed = new Date(formatted);
-        return isNaN(parsed.getTime()) ? null : parsed;
+    const str = String(dateStr).trim();
+    const year = referenceDate.getFullYear();
+
+    if (/at/i.test(str)) {
+      const cleaned = str.replace(/ at /i, ' ').replace(/ AT /i, ' ');
+      const parts = cleaned.split(/\s+/);
+      if (parts.length === 4) {
+        const [day, monthAbbr, time, ampm] = parts;
+        const monthMap = {
+          'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+          'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+        };
+        const month = monthMap[monthAbbr];
+        if (month === undefined) return null;
+
+        const [hourStr, minStr] = time.split(':');
+        let hour = parseInt(hourStr, 10);
+        const minute = parseInt(minStr, 10);
+        if (isNaN(hour) || isNaN(minute)) return null;
+
+        if (ampm.toUpperCase() === 'PM' && hour < 12) hour += 12;
+        if (ampm.toUpperCase() === 'AM' && hour === 12) hour = 0;
+
+        const parsed = new Date(year, month, day, hour, minute, 0);
+        if (parsed > referenceDate) {
+          parsed.setFullYear(year - 1);
+        }
+        return parsed;
       }
-
-      // ✅ ISO / normal formats
-      const parsed = new Date(str);
-      return isNaN(parsed.getTime()) ? null : parsed;
-    } catch {
-      return null;
     }
+    // ISO / other formats
+    const parsed = new Date(str);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  } catch {
+    return null;
   }
-
+}
 
 }
 

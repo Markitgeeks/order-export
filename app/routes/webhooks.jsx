@@ -12,13 +12,16 @@ export const action = async ({ request }) => {
   }
 
   // Shared function to format Shopify date
-  function formatShopifyDate(isoDate) {
-    const dateObj = new Date(isoDate);
-    const optionsTime = { hour: "numeric", minute: "numeric", hour12: true };
-    return `${dateObj.getDate()} ${dateObj.toLocaleString("en-US", {
-      month: "short",
-    })} at ${dateObj.toLocaleTimeString("en-US", optionsTime)}`;
-  }
+  
+ function formatShopifyDate(isoDate) {
+  const dateObj = new Date(isoDate);
+  dateObj.setHours(dateObj.getHours() - 8);
+  const optionsTime = { hour: "numeric", minute: "numeric", hour12: true };
+  return `${dateObj.getDate()} ${dateObj.toLocaleString("en-US", {
+    month: "short",
+  })} at ${dateObj.toLocaleTimeString("en-US", optionsTime)}`;
+}
+
 
   // Shared function to process line items
   function processLineItems(lineItems) {
